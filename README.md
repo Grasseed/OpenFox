@@ -28,13 +28,19 @@ Supported installer environments:
 
 ### Uninstall
 
-Remove OpenFox only:
+Simple command:
+
+```bash
+openfox uninstall
+```
+
+Remove OpenFox only (direct script):
 
 ```bash
 bash ./scripts/uninstall-openfox.sh
 ```
 
-Remove OpenFox and opencode:
+Remove OpenFox and opencode (explicit opt-in):
 
 ```bash
 OPENFOX_UNINSTALL_REMOVE_OPENCODE=yes bash ./scripts/uninstall-openfox.sh
@@ -157,13 +163,19 @@ curl -fsSL https://raw.githubusercontent.com/Grasseed/OpenFox/main/scripts/insta
 
 ### 解除安裝
 
-只移除 OpenFox：
+簡單指令：
+
+```bash
+openfox uninstall
+```
+
+只移除 OpenFox（直接執行腳本）：
 
 ```bash
 bash ./scripts/uninstall-openfox.sh
 ```
 
-同時移除 OpenFox 與 opencode：
+同時移除 OpenFox 與 opencode（需明確指定）：
 
 ```bash
 OPENFOX_UNINSTALL_REMOVE_OPENCODE=yes bash ./scripts/uninstall-openfox.sh
@@ -286,13 +298,19 @@ curl -fsSL https://raw.githubusercontent.com/Grasseed/OpenFox/main/scripts/insta
 
 ### 卸载
 
-只移除 OpenFox：
+简易命令：
+
+```bash
+openfox uninstall
+```
+
+只移除 OpenFox（直接执行脚本）：
 
 ```bash
 bash ./scripts/uninstall-openfox.sh
 ```
 
-同时移除 OpenFox 和 opencode：
+同时移除 OpenFox 和 opencode（需要明确指定）：
 
 ```bash
 OPENFOX_UNINSTALL_REMOVE_OPENCODE=yes bash ./scripts/uninstall-openfox.sh

@@ -373,6 +373,28 @@ ensure_repo() {
   git clone "$REPO_URL" "$TARGET_DIR"
 }
 
+install_openfox_launcher() {
+  local launcher_dir="$HOME/.local/bin"
+  local launcher_path="$launcher_dir/openfox"
+  mkdir -p "$launcher_dir"
+
+  cat >"$launcher_path" <<EOF
+#!/usr/bin/env bash
+set -Eeuo pipefail
+bash "$TARGET_DIR/scripts/openfox.sh" "\$@"
+EOF
+
+  chmod +x "$launcher_path"
+  refresh_user_path
+
+  if command -v openfox >/dev/null 2>&1; then
+    log "Installed OpenFox launcher: $(command -v openfox)"
+  else
+    warn "OpenFox launcher installed at $launcher_path"
+    warn 'Add ~/.local/bin to PATH if `openfox` is not found in a new shell.'
+  fi
+}
+
 extract_default_model() {
   local config_json=""
   config_json="$(opencode debug config 2>/dev/null || true)"
@@ -499,6 +521,8 @@ main() {
   ensure_core_tools
   ensure_opencode_binary
   ensure_repo
+  chmod +x "$TARGET_DIR/scripts/install-openfox.sh" "$TARGET_DIR/scripts/uninstall-openfox.sh" "$TARGET_DIR/scripts/openfox.sh" 2>/dev/null || true
+  install_openfox_launcher
 
   log 'Checking opencode models before configuring OpenFox...'
   local models=""
