@@ -26,7 +26,23 @@ async function main() {
   throw new Error(`Unknown command: ${command}`)
 }
 
+function classifyError(error) {
+  if (error instanceof Error && error.message.startsWith('Telegram API ')) {
+    return 2
+  }
+
+  if (error instanceof TypeError && error.message === 'fetch failed') {
+    return 3
+  }
+
+  if (error && typeof error === 'object' && error.cause && error.cause.code) {
+    return 3
+  }
+
+  return 1
+}
+
 main().catch((error) => {
   console.error(error)
-  process.exitCode = 1
+  process.exitCode = classifyError(error)
 })
