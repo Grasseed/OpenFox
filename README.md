@@ -16,9 +16,15 @@ curl -fsSL https://raw.githubusercontent.com/Grasseed/OpenFox/main/scripts/insta
 
 The installer will:
 
-- install `opencode` first (via Homebrew) plus required tools
+- install `opencode` first plus required tools for the detected platform
+- reuse existing `brew`, `git`, `node`, `npm`, `curl`, and `opencode` when they are already available
 - verify `opencode` can list models before finishing OpenFox setup
 - clone or update OpenFox, create `.env`, run smoke checks, and optionally start the bot
+
+Supported installer environments:
+
+- macOS with Homebrew
+- Linux with `apt`, `dnf`, `yum`, `pacman`, `apk`, or `zypper`
 
 ### What is implemented
 
@@ -125,9 +131,15 @@ curl -fsSL https://raw.githubusercontent.com/Grasseed/OpenFox/main/scripts/insta
 
 安裝器會：
 
-- 優先安裝 `opencode`（透過 Homebrew）與必要工具
+- 依照偵測到的平台優先安裝 `opencode` 與必要工具
+- 若系統已經有 `brew`、`git`、`node`、`npm`、`curl`、`opencode`，會直接沿用，不會重複安裝
 - 在完成 OpenFox 設定前，先確認 `opencode` 可以列出可用模型
 - 自動 clone 或更新 OpenFox、建立 `.env`、執行冒煙檢查，並可選擇直接啟動 bot
+
+目前安裝器支援：
+
+- macOS（Homebrew）
+- Linux（`apt`、`dnf`、`yum`、`pacman`、`apk`、`zypper`）
 
 ### 已實作內容
 
@@ -234,9 +246,15 @@ curl -fsSL https://raw.githubusercontent.com/Grasseed/OpenFox/main/scripts/insta
 
 安装器会：
 
-- 优先安装 `opencode`（通过 Homebrew）和必要工具
+- 按检测到的平台优先安装 `opencode` 和必要工具
+- 如果系统已经有 `brew`、`git`、`node`、`npm`、`curl`、`opencode`，就会直接复用，不会重复安装
 - 在完成 OpenFox 配置前，先确认 `opencode` 可以列出可用模型
 - 自动 clone 或更新 OpenFox、创建 `.env`、执行冒烟检查，并可选择直接启动 bot
+
+当前安装器支持：
+
+- macOS（Homebrew）
+- Linux（`apt`、`dnf`、`yum`、`pacman`、`apk`、`zypper`）
 
 ### 已实现内容
 

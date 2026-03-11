@@ -8,6 +8,12 @@ BOT_TOKEN_VALUE="${BOT_TOKEN:-}"
 MODEL_VALUE="${OPENCODE_MODEL:-}"
 VARIANT_VALUE="${OPENCODE_VARIANT:-medium}"
 START_NOW_VALUE="${OPENFOX_START_NOW:-yes}"
+SKIP_OPENCODE_READY_CHECK="${OPENFOX_SKIP_OPENCODE_READY_CHECK:-0}"
+SKIP_VALIDATION="${OPENFOX_SKIP_VALIDATION:-0}"
+OS_NAME="$(uname -s)"
+PACKAGE_MANAGER=""
+PACKAGE_UPDATE_DONE=0
+ROOT_PREFIX=()
 
 log() {
   printf '[%s] %s\n' "$SCRIPT_NAME" "$*"
@@ -20,6 +26,11 @@ warn() {
 fail() {
   printf '[%s] ERROR: %s\n' "$SCRIPT_NAME" "$*" >&2
   exit 1
+}
+
+is_truthy() {
+  local value="${1:-}"
+  [[ "$value" =~ ^(1|true|yes|on)$ ]]
 }
 
 confirm() {
@@ -93,6 +104,82 @@ load_brew_env() {
   fi
 }
 
+refresh_user_path() {
+  load_brew_env
+
+  local dirs=()
+  local npm_prefix=""
+  npm_prefix="$(npm config get prefix 2>/dev/null || true)"
+  if [[ -n "$npm_prefix" && "$npm_prefix" != "undefined" ]]; then
+    dirs+=("$npm_prefix/bin")
+  fi
+  dirs+=("$HOME/.local/bin" "$HOME/bin")
+
+  local dir
+  for dir in "${dirs[@]}"; do
+    [[ -d "$dir" ]] || continue
+    case ":$PATH:" in
+      *":$dir:"*) ;;
+      *) PATH="$dir:$PATH" ;;
+    esac
+  done
+  export PATH
+}
+
+init_privileges() {
+  if [[ $(id -u) -eq 0 ]]; then
+    ROOT_PREFIX=()
+    return
+  fi
+
+  if command -v sudo >/dev/null 2>&1; then
+    ROOT_PREFIX=(sudo)
+    return
+  fi
+
+  ROOT_PREFIX=()
+}
+
+run_as_root() {
+  if [[ ${#ROOT_PREFIX[@]} -gt 0 ]]; then
+    "${ROOT_PREFIX[@]}" "$@"
+    return
+  fi
+  "$@"
+}
+
+detect_package_manager() {
+  load_brew_env
+
+  case "$OS_NAME" in
+    Darwin)
+      PACKAGE_MANAGER="brew"
+      ;;
+    Linux)
+      if command -v apt-get >/dev/null 2>&1; then
+        PACKAGE_MANAGER="apt"
+      elif command -v dnf >/dev/null 2>&1; then
+        PACKAGE_MANAGER="dnf"
+      elif command -v yum >/dev/null 2>&1; then
+        PACKAGE_MANAGER="yum"
+      elif command -v pacman >/dev/null 2>&1; then
+        PACKAGE_MANAGER="pacman"
+      elif command -v apk >/dev/null 2>&1; then
+        PACKAGE_MANAGER="apk"
+      elif command -v zypper >/dev/null 2>&1; then
+        PACKAGE_MANAGER="zypper"
+      elif command -v brew >/dev/null 2>&1; then
+        PACKAGE_MANAGER="brew"
+      else
+        fail 'Unsupported Linux distribution. Please install git, node, npm, and opencode manually first.'
+      fi
+      ;;
+    *)
+      fail "Unsupported operating system: $OS_NAME"
+      ;;
+  esac
+}
+
 ensure_homebrew() {
   load_brew_env
   if command -v brew >/dev/null 2>&1; then
@@ -105,17 +192,166 @@ ensure_homebrew() {
   command -v brew >/dev/null 2>&1 || fail 'Homebrew installation failed.'
 }
 
-ensure_formula() {
+package_update_once() {
+  if [[ $PACKAGE_UPDATE_DONE -eq 1 ]]; then
+    return
+  fi
+
+  case "$PACKAGE_MANAGER" in
+    apt)
+      run_as_root apt-get update -y
+      ;;
+    pacman)
+      run_as_root pacman -Sy --noconfirm
+      ;;
+  esac
+
+  PACKAGE_UPDATE_DONE=1
+}
+
+install_packages() {
+  package_update_once
+
+  case "$PACKAGE_MANAGER" in
+    brew)
+      brew install "$@"
+      ;;
+    apt)
+      run_as_root apt-get install -y "$@"
+      ;;
+    dnf)
+      run_as_root dnf install -y "$@"
+      ;;
+    yum)
+      run_as_root yum install -y "$@"
+      ;;
+    pacman)
+      run_as_root pacman -S --noconfirm "$@"
+      ;;
+    apk)
+      run_as_root apk add --no-cache "$@"
+      ;;
+    zypper)
+      run_as_root zypper --non-interactive install "$@"
+      ;;
+    *)
+      fail "Unsupported package manager: $PACKAGE_MANAGER"
+      ;;
+  esac
+}
+
+ensure_command_with_packages() {
   local command_name="$1"
-  local formula_name="$2"
+  shift
 
   if command -v "$command_name" >/dev/null 2>&1; then
     return
   fi
 
-  log "Installing $formula_name..."
-  brew install "$formula_name"
-  command -v "$command_name" >/dev/null 2>&1 || fail "Failed to install $formula_name."
+  log "Installing packages for $command_name: $*"
+  install_packages "$@"
+  refresh_user_path
+  command -v "$command_name" >/dev/null 2>&1 || fail "Failed to install required command: $command_name"
+}
+
+ensure_core_tools() {
+  case "$PACKAGE_MANAGER" in
+    brew)
+      ensure_homebrew
+      ensure_command_with_packages git git
+      ensure_command_with_packages node node
+      ensure_command_with_packages npm node
+      ensure_command_with_packages curl curl
+      ;;
+    apt)
+      ensure_command_with_packages curl ca-certificates curl
+      ensure_command_with_packages git git
+      ensure_command_with_packages node nodejs
+      ensure_command_with_packages npm npm
+      ;;
+    dnf|yum)
+      ensure_command_with_packages curl ca-certificates curl
+      ensure_command_with_packages git git
+      ensure_command_with_packages node nodejs
+      ensure_command_with_packages npm npm
+      ;;
+    pacman)
+      ensure_command_with_packages curl ca-certificates curl
+      ensure_command_with_packages git git
+      ensure_command_with_packages node nodejs
+      ensure_command_with_packages npm npm
+      ;;
+    apk)
+      ensure_command_with_packages bash bash
+      ensure_command_with_packages curl ca-certificates curl
+      ensure_command_with_packages git git
+      ensure_command_with_packages node nodejs
+      ensure_command_with_packages npm npm
+      ;;
+    zypper)
+      ensure_command_with_packages curl ca-certificates curl
+      ensure_command_with_packages git git
+      ensure_command_with_packages node nodejs
+      ensure_command_with_packages npm npm
+      ;;
+  esac
+
+  command -v curl >/dev/null 2>&1 || fail 'curl is required but was not installed successfully.'
+  command -v git >/dev/null 2>&1 || fail 'git is required but was not installed successfully.'
+  command -v node >/dev/null 2>&1 || fail 'node is required but was not installed successfully.'
+  command -v npm >/dev/null 2>&1 || fail 'npm is required but was not installed successfully.'
+  refresh_user_path
+}
+
+install_opencode_with_script() {
+  log 'Installing opencode with the official installer...'
+  /bin/bash -c "$(curl -fsSL https://opencode.ai/install)"
+  refresh_user_path
+}
+
+install_opencode_with_npm() {
+  log 'Falling back to npm global installation for opencode...'
+  if [[ ${#ROOT_PREFIX[@]} -gt 0 ]]; then
+    run_as_root npm install -g opencode-ai
+  else
+    npm install -g opencode-ai
+  fi
+  refresh_user_path
+}
+
+ensure_opencode_binary() {
+  refresh_user_path
+  if command -v opencode >/dev/null 2>&1; then
+    return
+  fi
+
+  case "$PACKAGE_MANAGER" in
+    brew)
+      log 'Installing opencode with Homebrew...'
+      if ! brew install anomalyco/tap/opencode; then
+        warn 'Homebrew installation for opencode failed. Trying the official installer instead.'
+      fi
+      ;;
+    pacman)
+      log 'Installing opencode with pacman...'
+      if ! install_packages opencode; then
+        warn 'pacman installation for opencode failed. Trying the official installer instead.'
+      fi
+      ;;
+  esac
+
+  refresh_user_path
+  if command -v opencode >/dev/null 2>&1; then
+    return
+  fi
+
+  install_opencode_with_script || true
+  if command -v opencode >/dev/null 2>&1; then
+    return
+  fi
+
+  install_opencode_with_npm
+  command -v opencode >/dev/null 2>&1 || fail 'Failed to install opencode.'
 }
 
 ensure_repo() {
@@ -129,10 +365,8 @@ ensure_repo() {
     fail "Target path exists and is not a directory: $TARGET_DIR"
   fi
 
-  if [[ -d "$TARGET_DIR" ]]; then
-    if [[ -n "$(ls -A "$TARGET_DIR")" ]]; then
-      fail "Target directory is not empty: $TARGET_DIR"
-    fi
+  if [[ -d "$TARGET_DIR" ]] && [[ -n "$(ls -A "$TARGET_DIR")" ]]; then
+    fail "Target directory is not empty: $TARGET_DIR"
   fi
 
   log "Cloning OpenFox into $TARGET_DIR"
@@ -140,7 +374,7 @@ ensure_repo() {
 }
 
 extract_default_model() {
-  local config_json
+  local config_json=""
   config_json="$(opencode debug config 2>/dev/null || true)"
   if [[ -z "$config_json" ]]; then
     printf ''
@@ -151,6 +385,12 @@ extract_default_model() {
 }
 
 ensure_opencode_ready() {
+  if is_truthy "$SKIP_OPENCODE_READY_CHECK"; then
+    log 'Skipping opencode ready check because OPENFOX_SKIP_OPENCODE_READY_CHECK is enabled.'
+    printf ''
+    return
+  fi
+
   local models_output
   local models_error
   models_output="$(mktemp)"
@@ -218,6 +458,11 @@ validate_openfox() {
   log 'Running OpenFox syntax checks...'
   npm --prefix "$TARGET_DIR" run check >/dev/null
 
+  if is_truthy "$SKIP_VALIDATION"; then
+    log 'Skipping runtime smoke tests because OPENFOX_SKIP_VALIDATION is enabled.'
+    return
+  fi
+
   log 'Running opencode smoke test...'
   if ! node "$TARGET_DIR/test-mcp.mjs" "Reply with exactly: OK" >/dev/null; then
     fail 'OpenFox installed, but opencode smoke test failed. Check your provider/model setup and rerun the installer.'
@@ -232,7 +477,7 @@ start_openfox() {
   local pid_file="$TARGET_DIR/openfox.pid"
 
   if [[ -f "$pid_file" ]]; then
-    local current_pid
+    local current_pid=""
     current_pid="$(cat "$pid_file")"
     if [[ -n "$current_pid" ]] && kill -0 "$current_pid" 2>/dev/null; then
       warn "OpenFox is already running with PID $current_pid"
@@ -249,19 +494,16 @@ start_openfox() {
 }
 
 main() {
-  command -v curl >/dev/null 2>&1 || fail 'curl is required.'
-  ensure_homebrew
-  ensure_formula git git
-  ensure_formula node node
-  ensure_formula npm node
-  ensure_formula opencode opencode
-
+  init_privileges
+  detect_package_manager
+  ensure_core_tools
+  ensure_opencode_binary
   ensure_repo
 
   log 'Checking opencode models before configuring OpenFox...'
-  local models
+  local models=""
   models="$(ensure_opencode_ready)"
-  local default_model
+  local default_model=""
   default_model="$(extract_default_model)"
   if [[ -z "$MODEL_VALUE" ]]; then
     MODEL_VALUE="$default_model"
@@ -272,7 +514,7 @@ main() {
   fi
   [[ -n "$BOT_TOKEN_VALUE" ]] || fail 'BOT_TOKEN is required.'
 
-  if [[ -t 0 ]]; then
+  if [[ -t 0 && -n "$models" ]]; then
     log 'Available models detected by opencode:'
     printf '%s\n' "$models"
   fi
@@ -285,7 +527,7 @@ main() {
   write_env_file
   validate_openfox
 
-  if [[ "$START_NOW_VALUE" == "yes" ]]; then
+  if is_truthy "$START_NOW_VALUE"; then
     start_openfox
   elif [[ -t 0 ]] && confirm 'Start OpenFox now in the background?' yes; then
     start_openfox
