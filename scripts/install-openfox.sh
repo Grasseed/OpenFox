@@ -80,6 +80,9 @@ menu_prompt() {
     return
   fi
 
+  local saved_tty
+  saved_tty="$(stty -g </dev/tty 2>/dev/null || true)"
+
   while true; do
     tty_printf '\033[2J\033[H'
     tty_printf "OpenFox Setup\n\n$title\n\n"
@@ -94,12 +97,19 @@ menu_prompt() {
     done
 
     tty_printf '\nUse ↑/↓ to move, Enter to confirm.\n'
+
+    stty -echo -icanon min 1 time 0 </dev/tty 2>/dev/null || true
+    key=""
     IFS= read -r -s -n 1 -u "$PROMPT_FD" key || true
 
     if [[ "$key" == $'\x1b' ]]; then
-      IFS= read -r -s -n 2 -u "$PROMPT_FD" seq || true
+      IFS= read -r -s -n 1 -t 0.1 -u "$PROMPT_FD" seq || true
+      key+="$seq"
+      seq=""
+      IFS= read -r -s -n 1 -t 0.1 -u "$PROMPT_FD" seq || true
       key+="$seq"
     fi
+    stty "$saved_tty" </dev/tty 2>/dev/null || true
 
     case "$key" in
       $'\x1b[A')
