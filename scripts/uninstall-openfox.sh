@@ -6,6 +6,11 @@ TARGET_DIR="${1:-${OPENFOX_INSTALL_DIR:-$HOME/OpenFox}}"
 REMOVE_OPENCODE="${OPENFOX_UNINSTALL_REMOVE_OPENCODE:-no}"
 AUTO_YES="${OPENFOX_UNINSTALL_YES:-no}"
 DRY_RUN="${OPENFOX_UNINSTALL_DRY_RUN:-no}"
+REMOVE_OPENCODE_EXPLICIT=0
+
+if [[ -n "${OPENFOX_UNINSTALL_REMOVE_OPENCODE+x}" ]]; then
+  REMOVE_OPENCODE_EXPLICIT=1
+fi
 
 log() {
   printf '[%s] %s\n' "$SCRIPT_NAME" "$*"
@@ -92,8 +97,43 @@ remove_openfox_files() {
   run_cmd rm -rf "$TARGET_DIR"
 }
 
+remove_openfox_launcher() {
+  local launcher_path="$HOME/.local/bin/openfox"
+  if [[ ! -f "$launcher_path" ]]; then
+    return
+  fi
+
+  if grep -Fq "$TARGET_DIR/scripts/openfox.sh" "$launcher_path" 2>/dev/null; then
+    log "Removing OpenFox launcher: $launcher_path"
+    run_cmd rm -f "$launcher_path"
+  else
+    warn "Launcher exists but points elsewhere, skipped: $launcher_path"
+  fi
+}
+
+resolve_remove_opencode() {
+  if is_truthy "$REMOVE_OPENCODE"; then
+    return 0
+  fi
+
+  if [[ $REMOVE_OPENCODE_EXPLICIT -eq 1 ]]; then
+    return 1
+  fi
+
+  if ! command -v opencode >/dev/null 2>&1; then
+    return 1
+  fi
+
+  if confirm 'Also remove opencode from this machine?' no; then
+    return 0
+  fi
+
+  return 1
+}
+
 uninstall_opencode() {
-  if ! is_truthy "$REMOVE_OPENCODE"; then
+  if ! resolve_remove_opencode; then
+    log 'Keeping opencode installed.'
     return
   fi
 
@@ -138,6 +178,7 @@ main() {
 
   stop_openfox_process
   remove_openfox_files
+  remove_openfox_launcher
   uninstall_opencode
 
   log 'Uninstall completed.'
