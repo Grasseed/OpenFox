@@ -60,12 +60,15 @@ curl http://127.0.0.1:3000/health
 - `/help`
 - `/status`
 - `/usage`
+- `/model`
 - `/skill`
 - `/reset`
 
 Any other text message is forwarded to `opencode run`.
 
 `/usage` reports tracked token totals for the current chat and globally in this bot's `state.json`. It does not include provider-side remaining quota.
+
+`/model` shows the active model and available models. You can switch models at runtime with `/model <provider/model-name>` or revert with `/model default` without restarting the bot.
 
 ### Notes
 
@@ -152,12 +155,15 @@ curl http://127.0.0.1:3000/health
 - `/help`
 - `/status`
 - `/usage`
+- `/model`
 - `/skill`
 - `/reset`
 
 其他文字訊息都會轉送給 `opencode run`。
 
 `/usage` 會回報本機器人在 `state.json` 追蹤的 token 用量（目前聊天與全域）。不包含供應商端剩餘額度資訊。
+
+`/model` 會顯示目前模型與可用模型清單。你可以用 `/model <provider/model-name>` 在不中斷 bot 的情況下即時切換，或用 `/model default` 切回預設模型。
 
 ### 注意事項
 
@@ -244,12 +250,15 @@ curl http://127.0.0.1:3000/health
 - `/help`
 - `/status`
 - `/usage`
+- `/model`
 - `/skill`
 - `/reset`
 
 其他文本消息都会转发给 `opencode run`。
 
 `/usage` 会报告此机器人在 `state.json` 中跟踪的 token 用量（当前聊天与全局）。不包含服务商侧剩余额度信息。
+
+`/model` 会显示当前模型与可用模型列表。你可以用 `/model <provider/model-name>` 在不中断 bot 的情况下即时切换，也可以用 `/model default` 切回默认模型。
 
 ### 注意事项
 
