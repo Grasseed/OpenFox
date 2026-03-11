@@ -14,7 +14,7 @@ async function main() {
 
   if (command === 'send') {
     const chatId = process.env.TEST_CHAT_ID
-    const text = process.argv.slice(3).join(' ').trim() || 'opencode-bot test message'
+    const text = process.argv.slice(3).join(' ').trim() || 'OpenFox test message'
     if (!chatId) {
       throw new Error('TEST_CHAT_ID is required for send mode.')
     }

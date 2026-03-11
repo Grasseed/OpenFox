@@ -1,10 +1,10 @@
-# opencode-bot
+# OpenFox
 
 [English](#english) | [繁體中文](#繁體中文) | [简体中文](#简体中文)
 
 ## English
 
-Local Telegram bot that forwards each chat to `opencode`, keeps one opencode session per Telegram chat, and returns the model response back to Telegram.
+OpenFox is a local Telegram bot that forwards each chat to `opencode`, keeps one opencode session per Telegram chat, and returns the model response back to Telegram.
 
 ### What is implemented
 
@@ -96,7 +96,7 @@ node test-mcp.mjs "Reply with exactly: OK"
 
 ## 繁體中文
 
-本專案是一個本地 Telegram 機器人，會把每個聊天訊息轉送到 `opencode`，為每個 Telegram 聊天維持獨立的 opencode session，並將模型回覆傳回 Telegram。
+OpenFox 是一個本地 Telegram 機器人，會把每個聊天訊息轉送到 `opencode`，為每個 Telegram 聊天維持獨立的 opencode session，並將模型回覆傳回 Telegram。
 
 ### 已實作內容
 
@@ -188,7 +188,7 @@ node test-mcp.mjs "Reply with exactly: OK"
 
 ## 简体中文
 
-本项目是一个本地 Telegram 机器人，会把每个聊天消息转发到 `opencode`，为每个 Telegram 聊天维护独立的 opencode session，并将模型回复返回到 Telegram。
+OpenFox 是一个本地 Telegram 机器人，会把每个聊天消息转发到 `opencode`，为每个 Telegram 聊天维护独立的 opencode session，并将模型回复返回到 Telegram。
 
 ### 已实现内容
 
