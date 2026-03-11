@@ -74,6 +74,7 @@ i18n_text() {
         title_model_for_provider) printf '選擇供應商 %%s 的模型';;
         opt_use_detected_default) printf '使用偵測到的預設值 (%%s)';;
         opt_keep_current_model) printf '保留目前模型 (%%s)';;
+        opt_connect_provider) printf '用 opencode 連線並設定更多供應商';;
         opt_enter_model_manually) printf '手動輸入模型';;
         opt_choose_another_provider) printf '重新選擇供應商';;
         prompt_enter_model_name) printf '請輸入模型名稱';;
@@ -106,6 +107,10 @@ i18n_text() {
         warn_local_provider_retry) printf '若你使用 LM Studio 或其他本地 provider，請先啟動後按 Enter 重試。';;
         warn_models_failed) printf 'opencode models 仍然失敗。';;
         err_finish_provider_setup_first) printf '請先完成 opencode provider 設定，再重新執行安裝器。';;
+        log_checking_telegram_bot_token) printf '檢查 Telegram bot token...';;
+        warn_skip_telegram_token_check) printf '因為尚未設定 BOT_TOKEN，略過 Telegram bot token 檢查。';;
+        warn_telegram_network_check_failed) printf '無法連線到 Telegram 驗證 BOT_TOKEN，安裝先繼續。請稍後再檢查網路或防火牆設定。';;
+        err_telegram_bot_token_invalid) printf 'Telegram BOT_TOKEN 驗證失敗，請檢查 token 是否正確後重新執行安裝器。';;
         *) printf '%s' "$key";;
       esac
       ;;
@@ -133,6 +138,7 @@ i18n_text() {
         title_model_for_provider) printf '选择供应商 %%s 的模型';;
         opt_use_detected_default) printf '使用检测到的默认值 (%%s)';;
         opt_keep_current_model) printf '保留当前模型 (%%s)';;
+        opt_connect_provider) printf '用 opencode 连接并配置更多供应商';;
         opt_enter_model_manually) printf '手动输入模型';;
         opt_choose_another_provider) printf '重新选择供应商';;
         prompt_enter_model_name) printf '请输入模型名称';;
@@ -165,6 +171,10 @@ i18n_text() {
         warn_local_provider_retry) printf '如果你使用 LM Studio 或其他本地 provider，请先启动后按 Enter 重试。';;
         warn_models_failed) printf 'opencode models 仍然失败。';;
         err_finish_provider_setup_first) printf '请先完成 opencode provider 配置，再重新运行安装器。';;
+        log_checking_telegram_bot_token) printf '检查 Telegram bot token...';;
+        warn_skip_telegram_token_check) printf '因为尚未配置 BOT_TOKEN，跳过 Telegram bot token 检查。';;
+        warn_telegram_network_check_failed) printf '无法连接到 Telegram 验证 BOT_TOKEN，安装先继续。请稍后再检查网络或防火墙设置。';;
+        err_telegram_bot_token_invalid) printf 'Telegram BOT_TOKEN 验证失败，请检查 token 是否正确后重新运行安装器。';;
         *) printf '%s' "$key";;
       esac
       ;;
@@ -192,6 +202,7 @@ i18n_text() {
         title_model_for_provider) printf 'Choose a model from provider %%s';;
         opt_use_detected_default) printf 'Use detected default (%%s)';;
         opt_keep_current_model) printf 'Keep current model (%%s)';;
+        opt_connect_provider) printf 'Connect and configure more providers with opencode';;
         opt_enter_model_manually) printf 'Enter model manually';;
         opt_choose_another_provider) printf 'Choose another provider';;
         prompt_enter_model_name) printf 'Enter the model name';;
@@ -224,6 +235,10 @@ i18n_text() {
         warn_local_provider_retry) printf 'If you use LM Studio or another local provider, start it now and then press Enter to retry.';;
         warn_models_failed) printf 'opencode models still failed.';;
         err_finish_provider_setup_first) printf 'Finish your opencode provider setup first, then rerun this installer.';;
+        log_checking_telegram_bot_token) printf 'Checking Telegram bot token...';;
+        warn_skip_telegram_token_check) printf 'Skipping Telegram bot token check because BOT_TOKEN was not configured yet.';;
+        warn_telegram_network_check_failed) printf 'Could not reach Telegram to verify BOT_TOKEN. Continuing installation; check your network or firewall settings later.';;
+        err_telegram_bot_token_invalid) printf 'Telegram BOT_TOKEN validation failed. Check the token and rerun the installer.';;
         *) printf '%s' "$key";;
       esac
       ;;
@@ -461,6 +476,39 @@ array_contains() {
   return 1
 }
 
+launch_opencode_provider_setup() {
+  if [[ "$INTERACTIVE" -ne 1 ]]; then
+    return 1
+  fi
+
+  if command -v script >/dev/null 2>&1; then
+    script -q /dev/null opencode auth login
+  else
+    opencode auth login </dev/tty >/dev/tty 2>/dev/tty
+  fi
+  return 0
+}
+
+refresh_available_models() {
+  local models_output=""
+  local models_error=""
+  models_output="$(mktemp)"
+  models_error="$(mktemp)"
+  trap 'rm -f "$models_output" "$models_error"' RETURN
+
+  if opencode models --refresh >"$models_output" 2>"$models_error"; then
+    cat "$models_output"
+    return
+  fi
+
+  if opencode models >"$models_output" 2>"$models_error"; then
+    cat "$models_output"
+    return
+  fi
+
+  printf ''
+}
+
 choose_model_from_provider() {
   local provider="$1"
   local default_model="$2"
@@ -575,7 +623,11 @@ choose_model_from_list() {
       options+=("$provider")
     done
 
-    options+=("$(i18n_text 'opt_enter_model_manually')" "$(i18n_text 'opt_skip_for_now')")
+    options+=(
+      "$(i18n_text 'opt_connect_provider')"
+      "$(i18n_text 'opt_enter_model_manually')"
+      "$(i18n_text 'opt_skip_for_now')"
+    )
     choice="$(menu_prompt "$(i18n_text 'title_provider')" "${options[@]}")"
 
     if [[ -n "$default_model" ]]; then
@@ -605,6 +657,12 @@ choose_model_from_list() {
 
     index=$((provider_end + 1))
     if [[ "$choice" -eq $index ]]; then
+      launch_opencode_provider_setup
+      return 10
+    fi
+
+    index=$((index + 1))
+    if [[ "$choice" -eq $index ]]; then
       MODEL_VALUE="$(prompt_value "$(i18n_text 'prompt_enter_model_name')" "$MODEL_VALUE")"
       return
     fi
@@ -617,44 +675,58 @@ configure_opencode_model() {
   local default_model="$1"
   local models_text="$2"
   local models=()
+  local line=""
+  local choice=""
+  local status=0
 
-  while IFS= read -r line; do
-    [[ -n "$line" ]] || continue
-    models+=("$line")
-  done <<< "$models_text"
+  while true; do
+    models=()
+    while IFS= read -r line; do
+      [[ -n "$line" ]] || continue
+      models+=("$line")
+    done <<< "$models_text"
 
-  if [[ ${#models[@]} -gt 0 ]]; then
-    choose_model_from_list "$default_model" "${models[@]}"
-    return
-  fi
-
-  local choice
-  choice="$(menu_prompt \
-    "$(i18n_text 'title_opencode_not_ready')" \
-    "$(i18n_text 'opt_retry_opencode_check')" \
-    "$(i18n_text 'opt_open_opencode_auth_login')" \
-    "$(i18n_text 'opt_enter_model_and_continue')" \
-    "$(i18n_text 'opt_skip_model_setup')" \
-    "$(i18n_text 'opt_abort_installation')")"
-  case "$choice" in
-    0)
-      return 10
-      ;;
-    1)
-      opencode auth login </dev/tty >/dev/tty 2>/dev/tty || true
-      return 10
-      ;;
-    2)
-      MODEL_VALUE="$(prompt_value "$(i18n_text 'prompt_enter_model_name')" "$MODEL_VALUE")"
+    if [[ ${#models[@]} -gt 0 ]]; then
+      if choose_model_from_list "$default_model" "${models[@]}"; then
+        status=0
+      else
+        status=$?
+      fi
+      if [[ $status -eq 10 ]]; then
+        models_text="$(refresh_available_models)"
+        continue
+      fi
       return 0
-      ;;
-    3)
-      return 0
-      ;;
-    4)
-      fail "$(i18n_text 'err_installation_cancelled')"
-      ;;
-  esac
+    fi
+
+    choice="$(menu_prompt \
+      "$(i18n_text 'title_opencode_not_ready')" \
+      "$(i18n_text 'opt_retry_opencode_check')" \
+      "$(i18n_text 'opt_open_opencode_auth_login')" \
+      "$(i18n_text 'opt_enter_model_and_continue')" \
+      "$(i18n_text 'opt_skip_model_setup')" \
+      "$(i18n_text 'opt_abort_installation')")"
+    case "$choice" in
+      0)
+        return 10
+        ;;
+      1)
+        launch_opencode_provider_setup
+        models_text="$(refresh_available_models)"
+        continue
+        ;;
+      2)
+        MODEL_VALUE="$(prompt_value "$(i18n_text 'prompt_enter_model_name')" "$MODEL_VALUE")"
+        return 0
+        ;;
+      3)
+        return 0
+        ;;
+      4)
+        fail "$(i18n_text 'err_installation_cancelled')"
+        ;;
+    esac
+  done
 }
 
 choose_start_behavior() {
@@ -1146,7 +1218,7 @@ ensure_opencode_ready() {
     if [[ $attempt -eq 1 ]]; then
       warn "$(i18n_text 'warn_hosted_provider_login')"
       if [[ "$INTERACTIVE" -eq 1 ]]; then
-        opencode auth login </dev/tty >/dev/tty 2>/dev/tty || true
+        launch_opencode_provider_setup || true
       fi
     else
       warn "$(i18n_text 'warn_local_provider_retry')"
@@ -1217,10 +1289,24 @@ validate_openfox() {
   fi
 
   if [[ -n "$BOT_TOKEN_VALUE" ]]; then
-    log 'Checking Telegram bot token...'
-    node "$TARGET_DIR/test-reply.mjs" me >/dev/null
+    log "$(i18n_text 'log_checking_telegram_bot_token')"
+    if node "$TARGET_DIR/test-reply.mjs" me >/dev/null; then
+      :
+    else
+      case "$?" in
+        2)
+          fail "$(i18n_text 'err_telegram_bot_token_invalid')"
+          ;;
+        3)
+          warn "$(i18n_text 'warn_telegram_network_check_failed')"
+          ;;
+        *)
+          fail 'Telegram bot token check failed unexpectedly. Review the error output and rerun the installer.'
+          ;;
+      esac
+    fi
   else
-    warn 'Skipping Telegram bot token check because BOT_TOKEN was not configured yet.'
+    warn "$(i18n_text 'warn_skip_telegram_token_check')"
   fi
 }
 
