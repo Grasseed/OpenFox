@@ -1065,7 +1065,22 @@ append_managed_block() {
   fi
 
   if grep -Fq "$begin_marker" "$rc_file"; then
-    return
+    local temp_file=""
+    temp_file="$(mktemp)"
+    awk -v begin="$begin_marker" -v end="$end_marker" '
+      index($0, begin) {
+        skip = 1
+        next
+      }
+      index($0, end) {
+        skip = 0
+        next
+      }
+      !skip {
+        print
+      }
+    ' "$rc_file" >"$temp_file"
+    mv "$temp_file" "$rc_file"
   fi
 
   printf '\n%s\n%s\n%s\n' "$begin_marker" "$block_content" "$end_marker" >>"$rc_file"
@@ -1099,7 +1114,9 @@ persist_shell_completion_entries() {
 if [[ "$(whence -w compdef 2>/dev/null)" == "compdef: none" ]]; then
   autoload -Uz compinit
   compinit
-fi'
+fi
+autoload -Uz _openfox
+compdef _openfox openfox'
   local bash_block='if [ -f "$HOME/.local/share/bash-completion/completions/openfox" ]; then
   . "$HOME/.local/share/bash-completion/completions/openfox"
 fi'
