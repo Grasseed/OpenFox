@@ -15,6 +15,7 @@ curl -fsSL https://raw.githubusercontent.com/Grasseed/OpenFox/main/scripts/insta
 ```
 
 If the current terminal still says `openfox: command not found` after installation, open a new shell or run `source ~/.zshrc`.
+After reloading the shell, `openfox <Tab>` completes subcommands such as `configure`, `status`, and `uninstall`.
 
 You can force installer language with `OPENFOX_LANG=en`, `OPENFOX_LANG=zh-TW`, or `OPENFOX_LANG=zh-CN`.
 
@@ -49,6 +50,8 @@ Simple command:
 ```bash
 openfox uninstall
 ```
+
+The guided uninstall uses arrow-key menus in interactive terminals.
 
 You can force uninstall language with `OPENFOX_UNINSTALL_LANG=en`, `OPENFOX_UNINSTALL_LANG=zh-TW`, or `OPENFOX_UNINSTALL_LANG=zh-CN`.
 
@@ -168,6 +171,7 @@ curl -fsSL https://raw.githubusercontent.com/Grasseed/OpenFox/main/scripts/insta
 ```
 
 如果安裝完成後，目前這個終端仍然顯示 `openfox: command not found`，請重新開一個 shell，或執行 `source ~/.zshrc`。
+重新載入 shell 之後，`openfox <Tab>` 會補出 `configure`、`status`、`uninstall` 等子命令。
 
 你也可以用 `OPENFOX_LANG=en`、`OPENFOX_LANG=zh-TW` 或 `OPENFOX_LANG=zh-CN` 強制指定安裝語言。
 
@@ -202,6 +206,8 @@ curl -fsSL https://raw.githubusercontent.com/Grasseed/OpenFox/main/scripts/insta
 ```bash
 openfox uninstall
 ```
+
+在互動式終端中，引導式解除安裝會使用方向鍵選單。
 
 你也可以用 `OPENFOX_UNINSTALL_LANG=en`、`OPENFOX_UNINSTALL_LANG=zh-TW` 或 `OPENFOX_UNINSTALL_LANG=zh-CN` 強制指定解除安裝語言。
 
@@ -321,6 +327,7 @@ curl -fsSL https://raw.githubusercontent.com/Grasseed/OpenFox/main/scripts/insta
 ```
 
 如果安装完成后，当前这个终端仍然显示 `openfox: command not found`，请重新打开一个 shell，或执行 `source ~/.zshrc`。
+重新载入 shell 之后，`openfox <Tab>` 会补出 `configure`、`status`、`uninstall` 等子命令。
 
 你也可以用 `OPENFOX_LANG=en`、`OPENFOX_LANG=zh-TW` 或 `OPENFOX_LANG=zh-CN` 强制指定安装语言。
 
@@ -355,6 +362,8 @@ curl -fsSL https://raw.githubusercontent.com/Grasseed/OpenFox/main/scripts/insta
 ```bash
 openfox uninstall
 ```
+
+在交互式终端中，引导式卸载会使用方向键菜单。
 
 你也可以用 `OPENFOX_UNINSTALL_LANG=en`、`OPENFOX_UNINSTALL_LANG=zh-TW` 或 `OPENFOX_UNINSTALL_LANG=zh-CN` 强制指定卸载语言。
 
