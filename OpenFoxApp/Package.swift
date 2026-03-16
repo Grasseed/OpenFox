@@ -7,7 +7,10 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "OpenFox",
-            path: "Sources/OpenFox"
+            path: "Sources/OpenFox",
+            resources: [
+                .copy("Resources/project")
+            ]
         )
     ]
 )

@@ -60,6 +60,7 @@ struct ConfigurationView: View {
                             Button(locale.t(.btnChange)) { pickProjectFolder() }
                                 .buttonStyle(.bordered).controlSize(.small)
                         }
+
                         // Validation indicator
                         let hasBotFile = FileManager.default.fileExists(
                             atPath: botManager.projectDirectory + "/telegram-bot.mjs")
@@ -72,6 +73,20 @@ struct ConfigurationView: View {
                                  : "telegram-bot.mjs not found — bot cannot start from this path")
                                 .font(.system(size: 11))
                                 .foregroundStyle(hasBotFile ? Color.secondary : Color.orange)
+                        }
+
+                        // Reinstall option when path is wrong
+                        if !hasBotFile {
+                            Button {
+                                botManager.reinstallBundledProject()
+                                editableConfig = botManager.config
+                            } label: {
+                                Label("Reinstall to App Support folder", systemImage: "arrow.down.circle.fill")
+                                    .font(.system(size: 12))
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .tint(.orange)
                         }
                     }
                 }
