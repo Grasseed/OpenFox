@@ -2,11 +2,13 @@ import SwiftUI
 
 struct ConfigurationView: View {
     @EnvironmentObject var botManager: BotManager
+    @EnvironmentObject var locale: LocaleManager
+    @StateObject private var modelService = ModelService.shared
     @State private var editableConfig: BotConfig = BotConfig()
     @State private var hasChanges = false
     @State private var showSaveAlert = false
     @State private var showTokenField = false
-    @State private var showProjectPicker = false
+    @State private var selectedProvider: String = ""
 
     var body: some View {
         ScrollView {
@@ -14,144 +16,172 @@ struct ConfigurationView: View {
                 // Header
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Configuration")
+                        Text(locale.t(.cfgTitle))
                             .font(.system(size: 28, weight: .bold, design: .rounded))
-                        Text("Manage your OpenFox bot settings")
-                            .font(.system(size: 14))
-                            .foregroundStyle(.secondary)
+                        Text(locale.t(.cfgSubtitle))
+                            .font(.system(size: 14)).foregroundStyle(.secondary)
                     }
                     Spacer()
-
                     HStack(spacing: 12) {
-                        Button("Reload") {
+                        Button(locale.t(.btnReload)) {
                             botManager.loadConfig()
                             editableConfig = botManager.config
                             hasChanges = false
                         }
                         .buttonStyle(.bordered)
 
-                        Button("Save") {
+                        Button(locale.t(.btnSave)) {
                             botManager.config = editableConfig
                             botManager.saveConfig()
                             hasChanges = false
                             showSaveAlert = true
                         }
-                        .buttonStyle(.borderedProminent)
-                        .tint(.orange)
-                        .disabled(!hasChanges)
+                        .buttonStyle(.borderedProminent).tint(.orange).disabled(!hasChanges)
                     }
                 }
                 .padding(.bottom, 8)
 
                 // Project path
-                ConfigSection(title: "Project", icon: "folder.fill", color: .brown) {
+                ConfigSection(title: locale.t(.cfgProject), icon: "folder.fill", color: .brown) {
                     HStack {
                         Text(botManager.projectDirectory)
                             .font(.system(size: 13, design: .monospaced))
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
+                            .foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
                         Spacer()
-                        Button("Change...") {
-                            pickProjectFolder()
-                        }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
+                        Button(locale.t(.btnChange)) { pickProjectFolder() }
+                            .buttonStyle(.bordered).controlSize(.small)
                     }
                 }
 
-                // Telegram section
-                ConfigSection(title: "Telegram", icon: "paperplane.fill", color: .blue) {
+                // Telegram
+                ConfigSection(title: locale.t(.cfgTelegram), icon: "paperplane.fill", color: .blue) {
                     VStack(spacing: 16) {
-                        ConfigField(label: "Bot Token", icon: "key.fill") {
+                        ConfigField(label: locale.t(.cfgBotToken), icon: "key.fill") {
                             HStack {
                                 if showTokenField {
-                                    TextField("Enter your Telegram bot token", text: binding(\.botToken))
-                                        .textFieldStyle(.plain)
-                                        .font(.system(size: 13, design: .monospaced))
+                                    TextField("", text: binding(\.botToken))
+                                        .textFieldStyle(.plain).font(.system(size: 13, design: .monospaced))
                                 } else {
-                                    Text(editableConfig.maskedToken.isEmpty ? "Not configured" : editableConfig.maskedToken)
-                                        .font(.system(size: 13, design: .monospaced))
-                                        .foregroundStyle(.secondary)
+                                    Text(editableConfig.maskedToken.isEmpty ? locale.t(.cfgNotConfigured) : editableConfig.maskedToken)
+                                        .font(.system(size: 13, design: .monospaced)).foregroundStyle(.secondary)
                                 }
                                 Spacer()
-                                Button(showTokenField ? "Hide" : "Show") {
-                                    showTokenField.toggle()
+                                Button(showTokenField ? locale.t(.cfgHide) : locale.t(.cfgShow)) { showTokenField.toggle() }
+                                    .buttonStyle(.bordered).controlSize(.small)
+                            }
+                        }
+                        ConfigField(label: locale.t(.cfgAllowGroups), icon: "person.3.fill") {
+                            Toggle("", isOn: binding(\.allowGroups)).toggleStyle(.switch).controlSize(.small)
+                        }
+                        ConfigField(label: locale.t(.cfgSkipPending), icon: "forward.fill") {
+                            Toggle("", isOn: binding(\.skipPendingUpdates)).toggleStyle(.switch).controlSize(.small)
+                        }
+                    }
+                }
+
+                // AI Model with provider picker
+                ConfigSection(title: locale.t(.cfgModel), icon: "cpu.fill", color: .purple) {
+                    VStack(spacing: 16) {
+                        // Provider picker
+                        ConfigField(label: locale.t(.cfgProvider), icon: "building.2.fill") {
+                            HStack(spacing: 8) {
+                                if modelService.isLoading {
+                                    ProgressView().scaleEffect(0.7).frame(width: 16, height: 16)
+                                    Text(locale.t(.cfgLoadingModels))
+                                        .font(.system(size: 12)).foregroundStyle(.secondary)
+                                } else if modelService.providers.isEmpty {
+                                    Text(locale.t(.cfgLoadingModels))
+                                        .font(.system(size: 12)).foregroundStyle(.secondary)
+                                } else {
+                                    Picker("", selection: $selectedProvider) {
+                                        Text(locale.t(.cfgSelectProvider)).tag("")
+                                        Text(locale.t(.cfgCustomModel)).tag("__custom__")
+                                        ForEach(modelService.providers, id: \.self) { provider in
+                                            Text(provider).tag(provider)
+                                        }
+                                    }
+                                    .pickerStyle(.menu)
+                                    .frame(maxWidth: 200)
+                                    .onChange(of: selectedProvider) { newProvider in
+                                        if newProvider != "__custom__" && newProvider != "" {
+                                            // Auto-select first model of provider
+                                            if let first = modelService.models(for: newProvider).first {
+                                                editableConfig.opencodeModel = first.fullName
+                                                hasChanges = true
+                                            }
+                                        }
+                                    }
                                 }
-                                .buttonStyle(.bordered)
-                                .controlSize(.small)
                             }
                         }
 
-                        ConfigField(label: "Allow Groups", icon: "person.3.fill") {
-                            Toggle("", isOn: binding(\.allowGroups))
-                                .toggleStyle(.switch)
-                                .controlSize(.small)
+                        // Model picker (shown when provider selected)
+                        if selectedProvider != "" && selectedProvider != "__custom__" {
+                            let models = modelService.models(for: selectedProvider)
+                            ConfigField(label: locale.t(.cfgModelLabel), icon: "brain") {
+                                Picker("", selection: binding(\.opencodeModel)) {
+                                    ForEach(models) { m in
+                                        Text(m.model).tag(m.fullName)
+                                    }
+                                }
+                                .pickerStyle(.menu)
+                                .frame(maxWidth: 300)
+                            }
                         }
 
-                        ConfigField(label: "Skip Pending Updates", icon: "forward.fill") {
-                            Toggle("", isOn: binding(\.skipPendingUpdates))
-                                .toggleStyle(.switch)
-                                .controlSize(.small)
-                        }
-                    }
-                }
-
-                // Model section
-                ConfigSection(title: "AI Model", icon: "cpu.fill", color: .purple) {
-                    VStack(spacing: 16) {
-                        ConfigField(label: "Model", icon: "brain") {
-                            TextField("e.g. lm-studio/llama2", text: binding(\.opencodeModel))
-                                .textFieldStyle(.plain)
-                                .font(.system(size: 13, design: .monospaced))
+                        // Custom model text field
+                        if selectedProvider == "__custom__" || selectedProvider == "" {
+                            ConfigField(label: locale.t(.cfgModelLabel), icon: "brain") {
+                                TextField("e.g. lm-studio/llama2", text: binding(\.opencodeModel))
+                                    .textFieldStyle(.plain).font(.system(size: 13, design: .monospaced))
+                            }
                         }
 
-                        ConfigField(label: "Thinking Variant", icon: "sparkles") {
+                        // Current value display
+                        if !editableConfig.opencodeModel.isEmpty {
+                            HStack(spacing: 6) {
+                                Image(systemName: "checkmark.circle.fill").foregroundStyle(.green).font(.system(size: 12))
+                                Text(editableConfig.opencodeModel)
+                                    .font(.system(size: 12, design: .monospaced)).foregroundStyle(.secondary)
+                            }
+                            .padding(.leading, 32)
+                        }
+
+                        ConfigField(label: locale.t(.cfgVariant), icon: "sparkles") {
                             Picker("", selection: binding(\.opencodeVariant)) {
-                                Text("Low").tag("low")
-                                Text("Medium").tag("medium")
-                                Text("High").tag("high")
+                                Text(locale.t(.cfgVariantLow)).tag("low")
+                                Text(locale.t(.cfgVariantMedium)).tag("medium")
+                                Text(locale.t(.cfgVariantHigh)).tag("high")
                             }
-                            .pickerStyle(.segmented)
-                            .frame(width: 240)
+                            .pickerStyle(.segmented).frame(width: 240)
                         }
-
-                        ConfigField(label: "Permission Mode", icon: "lock.shield.fill") {
+                        ConfigField(label: locale.t(.cfgPermission), icon: "lock.shield.fill") {
                             Picker("", selection: binding(\.opencodePermissionMode)) {
-                                Text("Ask").tag("ask")
-                                Text("Allow").tag("allow")
+                                Text(locale.t(.cfgPermAsk)).tag("ask")
+                                Text(locale.t(.cfgPermAllow)).tag("allow")
                             }
-                            .pickerStyle(.segmented)
-                            .frame(width: 160)
+                            .pickerStyle(.segmented).frame(width: 160)
                         }
                     }
                 }
 
-                // Advanced section
-                ConfigSection(title: "Advanced", icon: "wrench.and.screwdriver.fill", color: .gray) {
+                // Advanced
+                ConfigSection(title: locale.t(.cfgAdvanced), icon: "wrench.and.screwdriver.fill", color: .gray) {
                     VStack(spacing: 16) {
-                        ConfigField(label: "Poll Timeout (seconds)", icon: "clock") {
+                        ConfigField(label: locale.t(.cfgPollTimeout), icon: "clock") {
                             TextField("30", value: binding(\.pollTimeout), format: .number)
-                                .textFieldStyle(.plain)
-                                .frame(width: 80)
+                                .textFieldStyle(.plain).frame(width: 80)
                         }
-
-                        ConfigField(label: "Opencode Timeout (ms)", icon: "timer") {
+                        ConfigField(label: locale.t(.cfgOcTimeout), icon: "timer") {
                             TextField("600000", value: binding(\.opencodeTimeout), format: .number)
-                                .textFieldStyle(.plain)
-                                .frame(width: 100)
+                                .textFieldStyle(.plain).frame(width: 100)
                         }
-
-                        ConfigField(label: "Webhook Port", icon: "network") {
+                        ConfigField(label: locale.t(.cfgWebhookPort), icon: "network") {
                             TextField("3000", value: binding(\.port), format: .number)
-                                .textFieldStyle(.plain)
-                                .frame(width: 80)
+                                .textFieldStyle(.plain).frame(width: 80)
                         }
-
-                        ConfigField(label: "Delete Webhook on Start", icon: "xmark.circle") {
-                            Toggle("", isOn: binding(\.deleteWebhookOnStart))
-                                .toggleStyle(.switch)
-                                .controlSize(.small)
+                        ConfigField(label: locale.t(.cfgDeleteWebhook), icon: "xmark.circle") {
+                            Toggle("", isOn: binding(\.deleteWebhookOnStart)).toggleStyle(.switch).controlSize(.small)
                         }
                     }
                 }
@@ -162,23 +192,33 @@ struct ConfigurationView: View {
         }
         .onAppear {
             editableConfig = botManager.config
+            syncProviderSelection()
+            Task { await ModelService.shared.loadModels(projectPath: botManager.projectDirectory) }
         }
-        .alert("Configuration Saved", isPresented: $showSaveAlert) {
+        .onChange(of: modelService.providers) { _ in syncProviderSelection() }
+        .alert(locale.t(.cfgSaved), isPresented: $showSaveAlert) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text("Your settings have been saved to .env file.\nRestart the bot for changes to take effect.")
+            Text(locale.t(.cfgSavedMsg))
         }
     }
 
-    private func binding<T: Equatable>(_ keyPath: WritableKeyPath<BotConfig, T>) -> Binding<T> {
+    private func syncProviderSelection() {
+        let current = editableConfig.opencodeModel
+        if current.isEmpty { return }
+        let parts = current.split(separator: "/", maxSplits: 1)
+        if parts.count == 2 {
+            let provider = String(parts[0])
+            if modelService.providers.contains(provider) {
+                selectedProvider = provider
+            }
+        }
+    }
+
+    private func binding<T>(_ keyPath: WritableKeyPath<BotConfig, T>) -> Binding<T> {
         Binding(
             get: { editableConfig[keyPath: keyPath] },
-            set: { newValue in
-                editableConfig[keyPath: keyPath] = newValue
-                hasChanges = editableConfig[keyPath: keyPath] != botManager.config[keyPath: keyPath]
-                // Simple change detection
-                hasChanges = true
-            }
+            set: { editableConfig[keyPath: keyPath] = $0; hasChanges = true }
         )
     }
 
@@ -197,51 +237,30 @@ struct ConfigurationView: View {
 }
 
 struct ConfigSection<Content: View>: View {
-    let title: String
-    let icon: String
-    let color: Color
+    let title: String; let icon: String; let color: Color
     @ViewBuilder let content: Content
-
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(color)
-                Text(title)
-                    .font(.system(size: 15, weight: .semibold))
+                Image(systemName: icon).font(.system(size: 14, weight: .semibold)).foregroundStyle(color)
+                Text(title).font(.system(size: 15, weight: .semibold))
             }
-
             content
         }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(.background)
-                .shadow(color: .black.opacity(0.06), radius: 8, y: 2)
-        )
+        .padding(20).frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 12).fill(.background)
+            .shadow(color: .black.opacity(0.06), radius: 8, y: 2))
     }
 }
 
 struct ConfigField<Content: View>: View {
-    let label: String
-    let icon: String
+    let label: String; let icon: String
     @ViewBuilder let content: Content
-
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 12))
-                .foregroundStyle(.secondary)
-                .frame(width: 20)
-
-            Text(label)
-                .font(.system(size: 13, weight: .medium))
-                .frame(width: 180, alignment: .leading)
-
-            content
-                .frame(maxWidth: .infinity, alignment: .leading)
+            Image(systemName: icon).font(.system(size: 12)).foregroundStyle(.secondary).frame(width: 20)
+            Text(label).font(.system(size: 13, weight: .medium)).frame(width: 180, alignment: .leading)
+            content.frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.vertical, 4)
     }
