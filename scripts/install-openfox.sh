@@ -532,11 +532,7 @@ launch_opencode_provider_setup() {
     return 1
   fi
 
-  if command -v expect >/dev/null 2>&1; then
-    expect -c 'spawn opencode auth login; interact' </dev/tty
-  else
-    opencode auth login </dev/tty
-  fi
+  opencode auth login </dev/tty
   return 0
 }
 
