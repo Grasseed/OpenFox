@@ -43,12 +43,20 @@ struct ConfigurationView: View {
 
                 // Project path
                 ConfigSection(title: locale.t(.cfgProject), icon: "folder.fill", color: .brown) {
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 10) {
                         HStack {
                             Text(botManager.projectDirectory)
                                 .font(.system(size: 13, design: .monospaced))
                                 .foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
                             Spacer()
+                            Button {
+                                botManager.autoDetectProjectPath()
+                                editableConfig = botManager.config
+                            } label: {
+                                Label("Auto-detect", systemImage: "magnifyingglass")
+                            }
+                            .buttonStyle(.bordered).controlSize(.small)
+
                             Button(locale.t(.btnChange)) { pickProjectFolder() }
                                 .buttonStyle(.bordered).controlSize(.small)
                         }
@@ -58,7 +66,7 @@ struct ConfigurationView: View {
                         HStack(spacing: 6) {
                             Image(systemName: hasBotFile ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
                                 .font(.system(size: 11))
-                                .foregroundStyle(hasBotFile ? .green : .orange)
+                                .foregroundStyle(hasBotFile ? Color.green : Color.orange)
                             Text(hasBotFile
                                  ? "telegram-bot.mjs found ✓"
                                  : "telegram-bot.mjs not found — bot cannot start from this path")

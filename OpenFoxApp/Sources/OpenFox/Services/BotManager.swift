@@ -246,12 +246,24 @@ final class BotManager: ObservableObject {
 
     func setProjectPath(_ path: String) {
         projectPath = path
-        UserDefaults.standard.set(path, forKey: "project_path")
-        if !FileManager.default.fileExists(atPath: path + "/telegram-bot.mjs") {
+        if FileManager.default.fileExists(atPath: path + "/telegram-bot.mjs") {
+            // Only persist valid paths
+            UserDefaults.standard.set(path, forKey: "project_path")
+            addLog("Project path set: \(path)", level: .info)
+        } else {
             addLog("Warning: telegram-bot.mjs not found in \(path)", level: .warning)
             addLog("Bot cannot start from this directory.", level: .warning)
         }
         loadConfig()
         loadState()
+    }
+
+    func autoDetectProjectPath() {
+        // Clear saved path and re-run detection
+        UserDefaults.standard.removeObject(forKey: "project_path")
+        detectProjectPath()
+        loadConfig()
+        loadState()
+        addLog("Auto-detected project path: \(projectPath)", level: .info)
     }
 }
