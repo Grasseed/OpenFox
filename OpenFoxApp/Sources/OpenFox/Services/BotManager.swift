@@ -33,13 +33,17 @@ final class BotManager: ObservableObject {
     }
 
     private init() {
+        // Ensure bundled project files are available on first run
+        AppInstaller.shared.installIfNeeded()
         detectProjectPath()
         loadConfig()
         loadState()
     }
 
     private func detectProjectPath() {
-        // 1. Restore saved path first
+        let appSupport = AppInstaller.appSupportDir
+
+        // Priority 1: previously validated saved path
         if let saved = UserDefaults.standard.string(forKey: "project_path"),
            FileManager.default.fileExists(atPath: saved + "/telegram-bot.mjs") {
             projectPath = saved
@@ -48,16 +52,15 @@ final class BotManager: ObservableObject {
 
         let home = NSHomeDirectory()
         let candidates = [
-            // Path relative to app bundle (when running from OpenFoxApp/build/)
-            Bundle.main.bundlePath
-                .components(separatedBy: "/OpenFoxApp")[0],
-            // Common install locations
+            // 1. App Support (installed by AppInstaller — first-run users land here)
+            appSupport,
+            // 2. Developer / manual clone locations
+            Bundle.main.bundlePath.components(separatedBy: "/OpenFoxApp")[0],
             home + "/tools/OpenFox",
             home + "/OpenFox",
             home + "/Projects/OpenFox",
             home + "/dev/OpenFox",
             "/usr/local/share/openfox",
-            FileManager.default.currentDirectoryPath,
         ]
         for path in candidates {
             if FileManager.default.fileExists(atPath: path + "/telegram-bot.mjs") {
@@ -66,8 +69,8 @@ final class BotManager: ObservableObject {
                 return
             }
         }
-        // Fallback
-        projectPath = home + "/tools/OpenFox"
+        // Last resort: app support (user will need to configure .env)
+        projectPath = appSupport
     }
 
     func loadConfig() {
@@ -259,11 +262,25 @@ final class BotManager: ObservableObject {
     }
 
     func autoDetectProjectPath() {
-        // Clear saved path and re-run detection
         UserDefaults.standard.removeObject(forKey: "project_path")
         detectProjectPath()
         loadConfig()
         loadState()
         addLog("Auto-detected project path: \(projectPath)", level: .info)
+    }
+
+    func reinstallBundledProject() {
+        do {
+            try AppInstaller.shared.reinstall()
+            let dest = AppInstaller.appSupportDir
+            addLog("Reinstalled project files to: \(dest)", level: .info)
+            // Switch to freshly installed path
+            projectPath = dest
+            UserDefaults.standard.set(dest, forKey: "project_path")
+            loadConfig()
+            loadState()
+        } catch {
+            addLog("Reinstall failed: \(error.localizedDescription)", level: .error)
+        }
     }
 }

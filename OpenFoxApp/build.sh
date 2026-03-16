@@ -35,6 +35,16 @@ echo "[2/4] Creating app bundle..."
 cp "$BINARY_PATH" "$MACOS_DIR/OpenFox"
 cp "$SCRIPT_DIR/Info.plist" "$CONTENTS/Info.plist"
 
+# Copy SPM resource bundle (contains bundled OpenFox JS project files)
+BIN_DIR=$(swift build -c release --show-bin-path)
+RESOURCE_BUNDLE=$(find "$BIN_DIR" -name "*.bundle" -type d | head -1)
+if [ -n "$RESOURCE_BUNDLE" ]; then
+    cp -R "$RESOURCE_BUNDLE" "$RESOURCES_DIR/"
+    echo "  Resource bundle: $(basename $RESOURCE_BUNDLE)"
+else
+    echo "  Warning: No resource bundle found"
+fi
+
 # Step 3: Generate app icon
 echo "[3/4] Generating app icon..."
 APP_DIR="$SCRIPT_DIR" bash "$SCRIPT_DIR/scripts/generate-icon.sh" 2>/dev/null || true
