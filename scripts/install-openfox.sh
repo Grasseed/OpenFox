@@ -532,11 +532,7 @@ launch_opencode_provider_setup() {
     return 1
   fi
 
-  if command -v script >/dev/null 2>&1; then
-    script -q /dev/null opencode auth login </dev/tty
-  else
-    opencode auth login </dev/tty >/dev/tty 2>/dev/tty
-  fi
+  opencode auth login </dev/tty
   return 0
 }
 
