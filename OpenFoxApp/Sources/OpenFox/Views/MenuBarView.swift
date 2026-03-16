@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MenuBarView: View {
     @EnvironmentObject var botManager: BotManager
+    @EnvironmentObject var locale: LocaleManager
 
     var body: some View {
         VStack(spacing: 4) {
@@ -9,7 +10,7 @@ struct MenuBarView: View {
                 Circle()
                     .fill(botManager.isRunning ? Color.green : Color.secondary.opacity(0.4))
                     .frame(width: 8, height: 8)
-                Text(botManager.isRunning ? "Running" : "Stopped")
+                Text(botManager.isRunning ? locale.t(.statusRunning) : locale.t(.statusStopped))
                     .font(.system(size: 13, weight: .medium))
             }
 
@@ -17,58 +18,39 @@ struct MenuBarView: View {
 
             if botManager.isRunning {
                 HStack {
-                    Text("Uptime:")
-                        .foregroundStyle(.secondary)
+                    Text(locale.t(.menuUptime)).foregroundStyle(.secondary)
                     Text(botManager.uptime)
-                }
-                .font(.system(size: 12))
+                }.font(.system(size: 12))
 
                 HStack {
-                    Text("Tokens:")
-                        .foregroundStyle(.secondary)
+                    Text(locale.t(.menuTokens)).foregroundStyle(.secondary)
                     Text(botManager.usageStats.formattedTotal)
-                }
-                .font(.system(size: 12))
+                }.font(.system(size: 12))
 
                 Divider()
             }
 
-            Button(botManager.isRunning ? "Stop Bot" : "Start Bot") {
-                if botManager.isRunning {
-                    botManager.stopBot()
-                } else {
-                    botManager.startBot()
-                }
+            Button(botManager.isRunning ? locale.t(.menuStop) : locale.t(.menuStart)) {
+                if botManager.isRunning { botManager.stopBot() } else { botManager.startBot() }
             }
-            .keyboardShortcut(botManager.isRunning ? "s" : "r")
 
             if botManager.isRunning {
-                Button("Restart Bot") {
-                    botManager.restartBot()
-                }
+                Button(locale.t(.menuRestart)) { botManager.restartBot() }
             }
 
             Divider()
 
-            Button("Open Window") {
+            Button(locale.t(.menuOpenWindow)) {
                 NSApp.activate(ignoringOtherApps: true)
-                if let window = NSApp.windows.first(where: { $0.title.isEmpty || $0.title == "OpenFox" }) {
-                    window.makeKeyAndOrderFront(nil)
-                } else {
-                    NSApp.windows.first?.makeKeyAndOrderFront(nil)
-                }
+                NSApp.windows.first(where: { $0.canBecomeKey })?.makeKeyAndOrderFront(nil)
             }
-            .keyboardShortcut("o")
 
             Divider()
 
-            Button("Quit OpenFox") {
+            Button(locale.t(.menuQuit)) {
                 botManager.stopBot()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    NSApp.terminate(nil)
-                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { NSApp.terminate(nil) }
             }
-            .keyboardShortcut("q")
         }
     }
 }
