@@ -1,0 +1,414 @@
+{
+  "builtTestProducts" : [
+
+  ],
+  "copyCommands" : {
+
+  },
+  "explicitTargetDependencyImportCheckingMode" : {
+    "none" : {
+
+    }
+  },
+  "generatedSourceTargetSet" : [
+
+  ],
+  "pluginDescriptions" : [
+
+  ],
+  "swiftCommands" : {
+    "C.OpenFox-arm64-apple-macosx26.0-release.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/sources",
+      "importPath" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Models/BotConfig.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Models/UsageStats.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/OpenFoxApp.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Services/BotManager.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Views/ConfigurationView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Views/ContentView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Views/DashboardView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Views/LogsView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Views/MenuBarView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Views/UsageView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/sources"
+        }
+      ],
+      "isLibrary" : false,
+      "moduleName" : "OpenFox",
+      "moduleOutputPath" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/Modules/OpenFox.swiftmodule",
+      "objects" : [
+        "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/BotConfig.swift.o",
+        "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/UsageStats.swift.o",
+        "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/OpenFoxApp.swift.o",
+        "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/BotManager.swift.o",
+        "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/ConfigurationView.swift.o",
+        "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/ContentView.swift.o",
+        "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/DashboardView.swift.o",
+        "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/LogsView.swift.o",
+        "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/MenuBarView.swift.o",
+        "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/UsageView.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx13.0",
+        "-whole-module-optimization",
+        "-num-threads",
+        "14",
+        "-serialize-diagnostics",
+        "-O",
+        "-j14",
+        "-DSWIFT_PACKAGE",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/ModuleCache",
+        "-parseable-output",
+        "-Xfrontend",
+        "-entry-point-function-name",
+        "-Xfrontend",
+        "OpenFox_main",
+        "-swift-version",
+        "5",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "openfoxapp"
+      ],
+      "outputFileMapPath" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/BotConfig.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/UsageStats.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/OpenFoxApp.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/BotManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/ConfigurationView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/ContentView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/DashboardView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/LogsView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/MenuBarView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/UsageView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/Modules/OpenFox.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Models/BotConfig.swift",
+        "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Models/UsageStats.swift",
+        "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/OpenFoxApp.swift",
+        "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Services/BotManager.swift",
+        "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Views/ConfigurationView.swift",
+        "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Views/ContentView.swift",
+        "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Views/DashboardView.swift",
+        "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Views/LogsView.swift",
+        "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Views/MenuBarView.swift",
+        "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Views/UsageView.swift"
+      ],
+      "tempsPath" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build",
+      "wholeModuleOptimization" : true
+    }
+  },
+  "swiftFrontendCommands" : {
+
+  },
+  "swiftTargetScanArgs" : {
+    "OpenFox" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "OpenFox",
+      "-package-name",
+      "openfoxapp",
+      "-c",
+      "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Models/BotConfig.swift",
+      "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Models/UsageStats.swift",
+      "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/OpenFoxApp.swift",
+      "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Services/BotManager.swift",
+      "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Views/ConfigurationView.swift",
+      "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Views/ContentView.swift",
+      "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Views/DashboardView.swift",
+      "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Views/LogsView.swift",
+      "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Views/MenuBarView.swift",
+      "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Views/UsageView.swift",
+      "-I",
+      "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/Modules",
+      "-target",
+      "arm64-apple-macosx13.0",
+      "-whole-module-optimization",
+      "-num-threads",
+      "14",
+      "-serialize-diagnostics",
+      "-O",
+      "-j14",
+      "-DSWIFT_PACKAGE",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/ModuleCache",
+      "-parseable-output",
+      "-Xfrontend",
+      "-entry-point-function-name",
+      "-Xfrontend",
+      "OpenFox_main",
+      "-swift-version",
+      "5",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "openfoxapp",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ]
+  },
+  "targetDependencyMap" : {
+    "OpenFox" : [
+
+    ]
+  },
+  "testDiscoveryCommands" : {
+
+  },
+  "testEntryPointCommands" : {
+
+  },
+  "traitConfiguration" : {
+    "default" : {
+
+    }
+  },
+  "writeCommands" : {
+    "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Models/BotConfig.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Models/UsageStats.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/OpenFoxApp.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Services/BotManager.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Views/ConfigurationView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Views/ContentView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Views/DashboardView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Views/LogsView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Views/MenuBarView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/Sources/OpenFox/Views/UsageView.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/sources"
+    },
+    "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.product/Objects.LinkFileList" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<link-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/BotConfig.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/BotManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/ConfigurationView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/ContentView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/DashboardView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/LogsView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/MenuBarView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/OpenFoxApp.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/UsageStats.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.build/UsageView.swift.o"
+        }
+      ],
+      "outputFilePath" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/OpenFox.product/Objects.LinkFileList"
+    },
+    "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/swift-version--58304C5D6DBC2206.txt" : {
+      "alwaysOutOfDate" : true,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<swift-get-version>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+        }
+      ],
+      "outputFilePath" : "/Users/huangguanfu/tools/OpenFox/OpenFoxApp/.build/arm64-apple-macosx/release/swift-version--58304C5D6DBC2206.txt"
+    }
+  }
+}
