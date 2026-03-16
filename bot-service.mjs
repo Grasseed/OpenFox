@@ -40,6 +40,30 @@ function formatInt(value) {
   return new Intl.NumberFormat('en-US').format(toNumber(value))
 }
 
+function formatQuestionPrompt(questionState) {
+  const questions = Array.isArray(questionState?.questions) ? questionState.questions : []
+  if (questions.length === 0) return ''
+
+  const blocks = questions.map((question, index) => {
+    const lines = [`Q${index + 1}. ${question.question || 'No question text provided.'}`]
+    if (Array.isArray(question.options) && question.options.length > 0) {
+      for (const [optionIndex, option] of question.options.entries()) {
+        const description = option?.description ? ` - ${option.description}` : ''
+        lines.push(`${optionIndex + 1}. ${option?.label || 'Option'}${description}`)
+      }
+    }
+    return lines.join('\n')
+  })
+
+  return [
+    'The model needs a quick answer before it can continue:',
+    '',
+    ...blocks,
+    '',
+    'Reply with an option label or answer in your own words.'
+  ].join('\n')
+}
+
 export class TelegramOpencodeBot {
   constructor(config) {
     this.config = config
@@ -182,6 +206,13 @@ export class TelegramOpencodeBot {
       }
       await this.stateStore.save(this.state)
 
+      if (result.question) {
+        if (result.reply) {
+          await this.telegram.sendText(chatId, result.reply)
+        }
+        await this.telegram.sendText(chatId, formatQuestionPrompt(result.question))
+        return
+      }
       await this.telegram.sendText(chatId, result.reply)
     } catch (error) {
       console.error('[processMessage] error:', error)
