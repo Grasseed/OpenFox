@@ -37,19 +37,22 @@ echo "[2/4] Preparing DMG contents..."
 cp -R "$APP_BUNDLE" "$STAGING_DIR/"
 ln -sf /Applications "$STAGING_DIR/Applications"
 
-echo "[3/4] Creating DMG image..."
+echo "[3/4] Creating compressed DMG..."
+rm -f "$DMG_FINAL"
 hdiutil create \
     -volname "$VOL_NAME" \
     -srcfolder "$STAGING_DIR" \
-    -ov -format UDRW \
-    "$DMG_RW" > /dev/null
+    -ov -format UDZO \
+    -imagekey zlib-level=9 \
+    "$DMG_FINAL" > /dev/null
 
-# Mount and apply Finder window settings
-MOUNT_PT=$(hdiutil attach "$DMG_RW" -readwrite -noverify -noautoopen \
+rm -rf "$STAGING_DIR"
+
+echo "[4/4] Applying Finder settings..."
+# Mount final DMG to set icon positions (best-effort)
+MOUNT_PT=$(hdiutil attach "$DMG_FINAL" -noverify -noautoopen 2>/dev/null \
     | awk '/Apple_HFS/{print $NF}')
-
 if [ -n "$MOUNT_PT" ]; then
-    sleep 1
     osascript <<APPLESCRIPT 2>/dev/null || true
 tell application "Finder"
   tell disk "$VOL_NAME"
@@ -68,22 +71,13 @@ tell application "Finder"
     set position of item "OpenFox.app"   of container window to {165, 190}
     set position of item "Applications"  of container window to {495, 190}
     close
-    open
     update without registering applications
     delay 1
-    close
   end tell
 end tell
 APPLESCRIPT
-    hdiutil detach "$MOUNT_PT" -quiet 2>/dev/null || true
-    sleep 1
+    hdiutil detach "$MOUNT_PT" -force 2>/dev/null || true
 fi
-
-echo "[4/4] Compressing final DMG..."
-hdiutil convert "$DMG_RW" -format UDZO -imagekey zlib-level=9 \
-    -o "$DMG_FINAL" > /dev/null
-rm -f "$DMG_RW"
-rm -rf "$STAGING_DIR"
 
 DMG_SIZE=$(du -sh "$DMG_FINAL" | cut -f1)
 

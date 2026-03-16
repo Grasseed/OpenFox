@@ -81,10 +81,37 @@ final class BotManager: ObservableObject {
             return
         }
         config = BotConfig.parse(from: content)
+
+        // Auto-fix placeholder paths from .env.example
+        var needsSave = false
+        if config.opencodeWorkdir.contains("/path/to/") || config.opencodeWorkdir.isEmpty {
+            config.opencodeWorkdir = projectPath
+            needsSave = true
+        }
+        if config.stateFile.contains("/path/to/") || config.stateFile.isEmpty {
+            config.stateFile = projectPath + "/data/state.json"
+            needsSave = true
+        }
+        if config.opencodeModel == "provider/model-name" {
+            config.opencodeModel = ""
+            needsSave = true
+        }
+        if needsSave { saveConfig() }
+
         addLog("Configuration loaded", level: .info)
     }
 
     func saveConfig() {
+        // Auto-fix placeholder or broken paths before saving
+        if config.opencodeWorkdir.isEmpty
+           || config.opencodeWorkdir.contains("/path/to/") {
+            config.opencodeWorkdir = projectPath
+        }
+        if config.stateFile.isEmpty
+           || config.stateFile.contains("/path/to/") {
+            config.stateFile = projectPath + "/data/state.json"
+        }
+
         let envPath = projectPath + "/.env"
         let content = config.toEnvString()
         do {
