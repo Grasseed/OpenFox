@@ -43,13 +43,28 @@ struct ConfigurationView: View {
 
                 // Project path
                 ConfigSection(title: locale.t(.cfgProject), icon: "folder.fill", color: .brown) {
-                    HStack {
-                        Text(botManager.projectDirectory)
-                            .font(.system(size: 13, design: .monospaced))
-                            .foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
-                        Spacer()
-                        Button(locale.t(.btnChange)) { pickProjectFolder() }
-                            .buttonStyle(.bordered).controlSize(.small)
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text(botManager.projectDirectory)
+                                .font(.system(size: 13, design: .monospaced))
+                                .foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
+                            Spacer()
+                            Button(locale.t(.btnChange)) { pickProjectFolder() }
+                                .buttonStyle(.bordered).controlSize(.small)
+                        }
+                        // Validation indicator
+                        let hasBotFile = FileManager.default.fileExists(
+                            atPath: botManager.projectDirectory + "/telegram-bot.mjs")
+                        HStack(spacing: 6) {
+                            Image(systemName: hasBotFile ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                                .font(.system(size: 11))
+                                .foregroundStyle(hasBotFile ? .green : .orange)
+                            Text(hasBotFile
+                                 ? "telegram-bot.mjs found ✓"
+                                 : "telegram-bot.mjs not found — bot cannot start from this path")
+                                .font(.system(size: 11))
+                                .foregroundStyle(hasBotFile ? Color.secondary : Color.orange)
+                        }
                     }
                 }
 

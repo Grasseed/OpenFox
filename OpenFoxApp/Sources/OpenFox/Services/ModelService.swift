@@ -31,8 +31,16 @@ final class ModelService: ObservableObject {
             proc.standardError = Pipe()
 
             var env = ProcessInfo.processInfo.environment
-            let paths = ["/usr/local/bin", "/opt/homebrew/bin", env["PATH"] ?? ""]
-            env["PATH"] = paths.joined(separator: ":")
+            let home = NSHomeDirectory()
+            let extraPaths = [
+                home + "/.opencode/bin",
+                home + "/.local/bin",
+                "/opt/homebrew/bin",
+                "/usr/local/bin",
+                "/usr/bin",
+                env["PATH"] ?? ""
+            ]
+            env["PATH"] = extraPaths.joined(separator: ":")
             proc.environment = env
 
             do {

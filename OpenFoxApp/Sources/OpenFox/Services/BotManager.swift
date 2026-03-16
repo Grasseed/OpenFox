@@ -39,21 +39,35 @@ final class BotManager: ObservableObject {
     }
 
     private func detectProjectPath() {
+        // 1. Restore saved path first
+        if let saved = UserDefaults.standard.string(forKey: "project_path"),
+           FileManager.default.fileExists(atPath: saved + "/telegram-bot.mjs") {
+            projectPath = saved
+            return
+        }
+
+        let home = NSHomeDirectory()
         let candidates = [
+            // Path relative to app bundle (when running from OpenFoxApp/build/)
             Bundle.main.bundlePath
                 .components(separatedBy: "/OpenFoxApp")[0],
+            // Common install locations
+            home + "/tools/OpenFox",
+            home + "/OpenFox",
+            home + "/Projects/OpenFox",
+            home + "/dev/OpenFox",
+            "/usr/local/share/openfox",
             FileManager.default.currentDirectoryPath,
-            NSHomeDirectory() + "/tools/OpenFox",
-            "/usr/local/share/openfox"
         ]
         for path in candidates {
             if FileManager.default.fileExists(atPath: path + "/telegram-bot.mjs") {
                 projectPath = path
+                UserDefaults.standard.set(path, forKey: "project_path")
                 return
             }
         }
-        // Fallback: ask user to configure
-        projectPath = NSHomeDirectory() + "/tools/OpenFox"
+        // Fallback
+        projectPath = home + "/tools/OpenFox"
     }
 
     func loadConfig() {
@@ -103,18 +117,34 @@ final class BotManager: ObservableObject {
         let outPipe = Pipe()
         let errPipe = Pipe()
 
+        let scriptPath = projectPath + "/telegram-bot.mjs"
+        guard FileManager.default.fileExists(atPath: scriptPath) else {
+            addLog("telegram-bot.mjs not found at: \(projectPath)", level: .error)
+            addLog("Please set the correct OpenFox project path in Configuration.", level: .warning)
+            return
+        }
+
         proc.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        proc.arguments = ["node", "telegram-bot.mjs"]
+        // Use absolute path to script so it works regardless of CWD
+        proc.arguments = ["node", scriptPath]
         proc.currentDirectoryURL = URL(fileURLWithPath: projectPath)
         proc.standardOutput = outPipe
         proc.standardError = errPipe
 
-        // Pass environment
+        // Build PATH that includes all common node/opencode locations
         var env = ProcessInfo.processInfo.environment
         env["NODE_NO_WARNINGS"] = "1"
-        // Add common paths for node
-        let paths = ["/usr/local/bin", "/opt/homebrew/bin", env["PATH"] ?? ""]
-        env["PATH"] = paths.joined(separator: ":")
+        let home = NSHomeDirectory()
+        let extraPaths = [
+            home + "/.opencode/bin",    // opencode default install
+            home + "/.local/bin",
+            "/opt/homebrew/bin",
+            "/opt/homebrew/sbin",
+            "/usr/local/bin",
+            "/usr/bin",
+            env["PATH"] ?? ""
+        ]
+        env["PATH"] = extraPaths.joined(separator: ":")
         proc.environment = env
 
         outPipe.fileHandleForReading.readabilityHandler = { [weak self] handle in
@@ -216,6 +246,11 @@ final class BotManager: ObservableObject {
 
     func setProjectPath(_ path: String) {
         projectPath = path
+        UserDefaults.standard.set(path, forKey: "project_path")
+        if !FileManager.default.fileExists(atPath: path + "/telegram-bot.mjs") {
+            addLog("Warning: telegram-bot.mjs not found in \(path)", level: .warning)
+            addLog("Bot cannot start from this directory.", level: .warning)
+        }
         loadConfig()
         loadState()
     }
