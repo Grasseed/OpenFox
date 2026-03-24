@@ -300,6 +300,17 @@ is_truthy() {
   [[ "$value" =~ ^(1|true|yes|on)$ ]]
 }
 
+is_windows_os() {
+  case "$OS_NAME" in
+    MINGW*|MSYS*|CYGWIN*|Windows_NT)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
 init_prompt_io() {
   if [[ -t 0 ]]; then
     INTERACTIVE=1
@@ -1126,6 +1137,17 @@ prompt_value() {
 }
 
 load_brew_env() {
+  if is_windows_os; then
+    if [[ -d /c/Windows/System32 ]]; then
+      case ":$PATH:" in
+        *":/c/Windows/System32:"*) ;;
+        *) PATH="/c/Windows/System32:$PATH" ;;
+      esac
+      export PATH
+    fi
+    return
+  fi
+
   if command -v brew >/dev/null 2>&1; then
     return
   fi
@@ -1137,6 +1159,21 @@ load_brew_env() {
   elif [[ -x /home/linuxbrew/.linuxbrew/bin/brew ]]; then
     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
   fi
+}
+
+to_unix_path() {
+  local raw_path="${1:-}"
+  if [[ -z "$raw_path" ]]; then
+    printf ''
+    return
+  fi
+
+  if command -v cygpath >/dev/null 2>&1 && [[ "$raw_path" =~ ^[A-Za-z]:[\\/].* ]]; then
+    cygpath -u "$raw_path"
+    return
+  fi
+
+  printf '%s' "$raw_path"
 }
 
 append_path_export_line() {
@@ -1236,9 +1273,18 @@ refresh_user_path() {
   local npm_prefix=""
   npm_prefix="$(npm config get prefix 2>/dev/null || true)"
   if [[ -n "$npm_prefix" && "$npm_prefix" != "undefined" ]]; then
+    npm_prefix="$(to_unix_path "$npm_prefix")"
     dirs+=("$npm_prefix/bin")
   fi
   dirs+=("$HOME/.opencode/bin" "$HOME/.local/bin" "$HOME/bin")
+  if is_windows_os; then
+    dirs+=(
+      "$HOME/AppData/Roaming/npm"
+      "$HOME/AppData/Local/Microsoft/WindowsApps"
+      "/c/Program Files/nodejs"
+      "/c/Program Files/Git/cmd"
+    )
+  fi
 
   local dir
   for dir in "${dirs[@]}"; do
@@ -1293,6 +1339,17 @@ detect_package_manager() {
   load_brew_env
 
   case "$OS_NAME" in
+    MINGW*|MSYS*|CYGWIN*|Windows_NT)
+      if command -v winget >/dev/null 2>&1; then
+        PACKAGE_MANAGER="winget"
+      elif command -v choco >/dev/null 2>&1; then
+        PACKAGE_MANAGER="choco"
+      elif command -v scoop >/dev/null 2>&1; then
+        PACKAGE_MANAGER="scoop"
+      else
+        fail 'Unsupported Windows environment. Install winget, choco, or scoop first.'
+      fi
+      ;;
     Darwin)
       PACKAGE_MANAGER="brew"
       ;;
@@ -1353,6 +1410,7 @@ package_update_once() {
 install_packages() {
   package_update_once
 
+  local package_name=""
   case "$PACKAGE_MANAGER" in
     brew)
       brew install "$@"
@@ -1374,6 +1432,18 @@ install_packages() {
       ;;
     zypper)
       run_as_root zypper --non-interactive install "$@"
+      ;;
+    winget)
+      for package_name in "$@"; do
+        winget install --id "$package_name" --exact --accept-source-agreements --accept-package-agreements --silent || \
+          winget install --id "$package_name" --exact --accept-source-agreements --accept-package-agreements
+      done
+      ;;
+    choco)
+      run_as_root choco install -y "$@"
+      ;;
+    scoop)
+      scoop install "$@"
       ;;
     *)
       fail "Unsupported package manager: $PACKAGE_MANAGER"
@@ -1434,6 +1504,24 @@ ensure_core_tools() {
       ensure_command_with_packages git git
       ensure_command_with_packages node nodejs
       ensure_command_with_packages npm npm
+      ;;
+    winget)
+      ensure_command_with_packages git Git.Git
+      ensure_command_with_packages node OpenJS.NodeJS.LTS
+      ensure_command_with_packages npm OpenJS.NodeJS.LTS
+      ensure_command_with_packages curl cURL.cURL
+      ;;
+    choco)
+      ensure_command_with_packages git git
+      ensure_command_with_packages node nodejs-lts
+      ensure_command_with_packages npm nodejs-lts
+      ensure_command_with_packages curl curl
+      ;;
+    scoop)
+      ensure_command_with_packages git git
+      ensure_command_with_packages node nodejs-lts
+      ensure_command_with_packages npm nodejs-lts
+      ensure_command_with_packages curl curl
       ;;
   esac
 
@@ -1530,6 +1618,15 @@ bash "$TARGET_DIR/scripts/openfox.sh" "\$@"
 EOF
 
   chmod +x "$launcher_path"
+
+  if is_windows_os; then
+    cat >"$launcher_dir/openfox.cmd" <<EOF
+@echo off
+setlocal
+bash "$TARGET_DIR/scripts/openfox.sh" %*
+EOF
+  fi
+
   refresh_user_path
 
   if command -v openfox >/dev/null 2>&1; then

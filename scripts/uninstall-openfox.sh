@@ -367,17 +367,23 @@ remove_openfox_files() {
 }
 
 remove_openfox_launcher() {
-  local launcher_path="$HOME/.local/bin/openfox"
-  if [[ ! -f "$launcher_path" ]]; then
-    return
-  fi
+  local launcher_paths=(
+    "$HOME/.local/bin/openfox"
+    "$HOME/.local/bin/openfox.cmd"
+  )
+  local launcher_path=""
+  for launcher_path in "${launcher_paths[@]}"; do
+    if [[ ! -f "$launcher_path" ]]; then
+      continue
+    fi
 
-  if grep -Fq "$TARGET_DIR/scripts/openfox.sh" "$launcher_path" 2>/dev/null; then
-    log "$(i18n_printf 'log_removing_launcher' "$launcher_path")"
-    run_cmd rm -f "$launcher_path"
-  else
-    warn "$(i18n_printf 'warn_launcher_points_elsewhere' "$launcher_path")"
-  fi
+    if grep -Fq "$TARGET_DIR/scripts/openfox.sh" "$launcher_path" 2>/dev/null; then
+      log "$(i18n_printf 'log_removing_launcher' "$launcher_path")"
+      run_cmd rm -f "$launcher_path"
+    else
+      warn "$(i18n_printf 'warn_launcher_points_elsewhere' "$launcher_path")"
+    fi
+  done
 }
 
 remove_managed_block() {

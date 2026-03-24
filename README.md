@@ -14,7 +14,9 @@ One command with guided setup:
 curl -fsSL https://raw.githubusercontent.com/Grasseed/OpenFox/main/scripts/install-openfox.sh | bash
 ```
 
-If the current terminal still says `openfox: command not found` after installation, open a new shell or run `source ~/.zshrc`.
+On Windows, run the installer in Git Bash (or another Bash-compatible shell such as MSYS2/Cygwin).
+
+If the current terminal still says `openfox: command not found` after installation, open a new shell or run `source ~/.zshrc` (or `source ~/.bashrc` for Bash).
 After reloading the shell, `openfox <Tab>` completes subcommands such as `configure`, `status`, and `uninstall`.
 
 You can force installer language with `OPENFOX_LANG=en`, `OPENFOX_LANG=zh-TW`, or `OPENFOX_LANG=zh-CN`.
@@ -42,6 +44,7 @@ Supported installer environments:
 
 - macOS with Homebrew
 - Linux with `apt`, `dnf`, `yum`, `pacman`, `apk`, or `zypper`
+- Windows (Git Bash/MSYS2/Cygwin) with `winget`, `choco`, or `scoop`
 
 ### Uninstall
 
@@ -177,7 +180,9 @@ OpenFox 是一個本地 Telegram 機器人，會把每個聊天訊息轉送到 `
 curl -fsSL https://raw.githubusercontent.com/Grasseed/OpenFox/main/scripts/install-openfox.sh | bash
 ```
 
-如果安裝完成後，目前這個終端仍然顯示 `openfox: command not found`，請重新開一個 shell，或執行 `source ~/.zshrc`。
+如果你是 Windows 使用者，請在 Git Bash（或 MSYS2 / Cygwin 這類相容 Bash 的 shell）中執行安裝器。
+
+如果安裝完成後，目前這個終端仍然顯示 `openfox: command not found`，請重新開一個 shell，或執行 `source ~/.zshrc`（若使用 Bash，請改用 `source ~/.bashrc`）。
 重新載入 shell 之後，`openfox <Tab>` 會補出 `configure`、`status`、`uninstall` 等子命令。
 
 你也可以用 `OPENFOX_LANG=en`、`OPENFOX_LANG=zh-TW` 或 `OPENFOX_LANG=zh-CN` 強制指定安裝語言。
@@ -205,6 +210,7 @@ curl -fsSL https://raw.githubusercontent.com/Grasseed/OpenFox/main/scripts/insta
 
 - macOS（Homebrew）
 - Linux（`apt`、`dnf`、`yum`、`pacman`、`apk`、`zypper`）
+- Windows（Git Bash / MSYS2 / Cygwin，支援 `winget`、`choco`、`scoop`）
 
 ### 解除安裝
 
@@ -340,7 +346,9 @@ OpenFox 是一个本地 Telegram 机器人，会把每个聊天消息转发到 `
 curl -fsSL https://raw.githubusercontent.com/Grasseed/OpenFox/main/scripts/install-openfox.sh | bash
 ```
 
-如果安装完成后，当前这个终端仍然显示 `openfox: command not found`，请重新打开一个 shell，或执行 `source ~/.zshrc`。
+如果你是 Windows 用户，请在 Git Bash（或 MSYS2 / Cygwin 这类兼容 Bash 的 shell）中运行安装器。
+
+如果安装完成后，当前这个终端仍然显示 `openfox: command not found`，请重新打开一个 shell，或执行 `source ~/.zshrc`（如果使用 Bash，请改用 `source ~/.bashrc`）。
 重新载入 shell 之后，`openfox <Tab>` 会补出 `configure`、`status`、`uninstall` 等子命令。
 
 你也可以用 `OPENFOX_LANG=en`、`OPENFOX_LANG=zh-TW` 或 `OPENFOX_LANG=zh-CN` 强制指定安装语言。
@@ -368,6 +376,7 @@ curl -fsSL https://raw.githubusercontent.com/Grasseed/OpenFox/main/scripts/insta
 
 - macOS（Homebrew）
 - Linux（`apt`、`dnf`、`yum`、`pacman`、`apk`、`zypper`）
+- Windows（Git Bash / MSYS2 / Cygwin，支持 `winget`、`choco`、`scoop`）
 
 ### 卸载
 
