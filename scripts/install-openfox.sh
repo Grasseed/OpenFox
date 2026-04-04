@@ -690,8 +690,8 @@ for (const id of ids) {
     temperature: true,
     tool_call: true,
     limit: {
-      context: 32768,
-      output: 8192
+      context: 100000,
+      output: 65536
     },
     ...existingModel
   }
