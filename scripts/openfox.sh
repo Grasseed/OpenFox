@@ -9,12 +9,15 @@ usage() {
 OpenFox command line helper
 
 Usage:
-  openfox start
+  openfox start [-d]
   openfox stop
   openfox status
   openfox configure
   openfox uninstall
   openfox help
+
+Options:
+  start -d    Start in the background (detached), writing logs to openfox.log
 
 Notes:
   - `openfox uninstall` runs the guided uninstall flow.
@@ -26,7 +29,32 @@ EOF
 }
 
 start_openfox() {
-  npm --prefix "$PROJECT_ROOT" start
+  local detach=0
+  if [[ "${1:-}" == '-d' ]]; then
+    detach=1
+  fi
+
+  if [[ "$detach" -eq 1 ]]; then
+    local log_file="$PROJECT_ROOT/openfox.log"
+    local pid_file="$PROJECT_ROOT/openfox.pid"
+
+    if [[ -f "$pid_file" ]]; then
+      local current_pid=""
+      current_pid="$(cat "$pid_file" 2>/dev/null || true)"
+      if [[ -n "$current_pid" ]] && kill -0 "$current_pid" 2>/dev/null; then
+        printf 'OpenFox is already running (PID %s).\n' "$current_pid"
+        return 0
+      fi
+    fi
+
+    nohup npm --prefix "$PROJECT_ROOT" start >"$log_file" 2>&1 &
+    local openfox_pid=$!
+    printf '%s\n' "$openfox_pid" >"$pid_file"
+    printf 'OpenFox started in background (PID %s).\n' "$openfox_pid"
+    printf 'Log file: %s\n' "$log_file"
+  else
+    npm --prefix "$PROJECT_ROOT" start
+  fi
 }
 
 stop_openfox() {
@@ -82,7 +110,7 @@ main() {
   local command="${1:-help}"
   case "$command" in
     start)
-      start_openfox
+      start_openfox "${2:-}"
       ;;
     stop)
       stop_openfox
