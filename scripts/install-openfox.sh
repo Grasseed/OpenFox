@@ -748,8 +748,19 @@ const existingExternalDirectory =
     ? config.permission.external_directory
     : {}
 
+const existingBash =
+  config.permission.bash &&
+  typeof config.permission.bash === 'object' &&
+  !Array.isArray(config.permission.bash)
+    ? config.permission.bash
+    : {}
+
 config.permission = {
   ...config.permission,
+  bash: {
+    ...existingBash,
+    '*': permissionMode
+  },
   external_directory: {
     ...existingExternalDirectory,
     '*': permissionMode
