@@ -72,7 +72,9 @@ i18n_text() {
         log_removing_opencode) printf '正在移除這台機器上的 opencode...';;
         log_running_self_uninstall) printf '正在執行 opencode 官方卸載...';;
         log_running_brew_uninstall) printf '正在執行 Homebrew 卸載：%%s';;
+        log_removing_opencode_binary) printf '正在移除殘留的 opencode 執行檔：%%s';;
         warn_self_uninstall_failed) printf 'opencode 官方卸載失敗，改用套件管理器清理。';;
+        warn_opencode_binary_remove_failed) printf '無法移除殘留的 opencode 執行檔：%%s';;
         warn_opencode_still_exists) printf 'PATH 中仍可找到 opencode，請執行 `command -v opencode` 檢查剩餘安裝來源。';;
         warn_opencode_still_exists_at) printf 'PATH 中仍可找到 opencode：%%s';;
         log_opencode_removed) printf 'PATH 中已找不到 opencode。';;
@@ -107,7 +109,9 @@ i18n_text() {
         log_removing_opencode) printf '正在移除这台机器上的 opencode...';;
         log_running_self_uninstall) printf '正在执行 opencode 官方卸载...';;
         log_running_brew_uninstall) printf '正在执行 Homebrew 卸载：%%s';;
+        log_removing_opencode_binary) printf '正在移除残留的 opencode 可执行文件：%%s';;
         warn_self_uninstall_failed) printf 'opencode 官方卸载失败，改用包管理器清理。';;
+        warn_opencode_binary_remove_failed) printf '无法移除残留的 opencode 可执行文件：%%s';;
         warn_opencode_still_exists) printf 'PATH 中仍能找到 opencode，请执行 `command -v opencode` 检查剩余安装来源。';;
         warn_opencode_still_exists_at) printf 'PATH 中仍能找到 opencode：%%s';;
         log_opencode_removed) printf 'PATH 中已找不到 opencode。';;
@@ -142,7 +146,9 @@ i18n_text() {
         log_removing_opencode) printf 'Removing opencode from this machine...';;
         log_running_self_uninstall) printf 'Running opencode self-uninstall...';;
         log_running_brew_uninstall) printf 'Running Homebrew uninstall: %%s';;
+        log_removing_opencode_binary) printf 'Removing remaining opencode binary: %%s';;
         warn_self_uninstall_failed) printf 'opencode self-uninstall failed; falling back to package manager cleanup.';;
+        warn_opencode_binary_remove_failed) printf 'Failed to remove remaining opencode binary: %%s';;
         warn_opencode_still_exists) printf 'opencode command still exists in PATH. Run `command -v opencode` to inspect remaining installation.';;
         warn_opencode_still_exists_at) printf 'opencode command still exists in PATH at: %%s';;
         log_opencode_removed) printf 'opencode appears to be removed from PATH.';;
@@ -392,7 +398,7 @@ remove_managed_block() {
   local end_marker="$3"
   local temp_file=""
 
-  [[ -f "$rc_file" ]] || return
+  [[ -f "$rc_file" ]] || return 0
 
   temp_file="$(mktemp)"
   awk -v begin="$begin_marker" -v end="$end_marker" '
@@ -423,6 +429,25 @@ remove_openfox_completions() {
 
 opencode_command_path() {
   command -v opencode 2>/dev/null || true
+}
+
+remove_remaining_opencode_binary() {
+  local remaining_path="${1:-}"
+  local parent_dir=""
+
+  [[ -n "$remaining_path" ]] || return 1
+  [[ -f "$remaining_path" ]] || return 1
+
+  log "$(i18n_printf 'log_removing_opencode_binary' "$remaining_path")"
+  if ! run_cmd rm -f "$remaining_path"; then
+    warn "$(i18n_printf 'warn_opencode_binary_remove_failed' "$remaining_path")"
+    return 1
+  fi
+
+  parent_dir="$(dirname -- "$remaining_path")"
+  run_cmd rmdir "$parent_dir" 2>/dev/null || true
+  hash -r 2>/dev/null || true
+  return 0
 }
 
 resolve_remove_opencode() {
@@ -484,6 +509,11 @@ uninstall_opencode() {
 
   local remaining_path=""
   remaining_path="$(opencode_command_path)"
+  if [[ -n "$remaining_path" ]]; then
+    remove_remaining_opencode_binary "$remaining_path" || true
+    remaining_path="$(opencode_command_path)"
+  fi
+
   if [[ -n "$remaining_path" ]]; then
     warn "$(i18n_printf 'warn_opencode_still_exists_at' "$remaining_path")"
     warn "$(i18n_text 'warn_opencode_still_exists')"
