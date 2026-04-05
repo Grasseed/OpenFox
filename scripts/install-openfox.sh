@@ -1082,10 +1082,7 @@ run_configuration_wizard() {
 
   choose_variant
   choose_permission_mode
-
-  if is_truthy "${OPENFOX_START_NOW:-yes}"; then
-    choose_start_behavior
-  fi
+  choose_start_behavior
 
   if [[ -z "$BOT_TOKEN_VALUE" ]]; then
     START_NOW_VALUE='no'
@@ -1856,6 +1853,8 @@ main() {
   validate_openfox
 
   if is_truthy "$START_NOW_VALUE"; then
+    start_openfox
+  elif [[ -t 0 ]] && confirm "$(i18n_text 'confirm_start_openfox_now')" yes; then
     start_openfox
   fi
 

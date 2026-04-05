@@ -34,6 +34,9 @@ start_openfox() {
     detach=1
   fi
 
+  # Ensure opencode and common tool paths are available in non-login shells.
+  export PATH="${HOME}/.opencode/bin:/opt/homebrew/bin:/usr/local/bin:${HOME}/.local/bin:${PATH}"
+
   if [[ "$detach" -eq 1 ]]; then
     local log_file="$PROJECT_ROOT/openfox.log"
     local pid_file="$PROJECT_ROOT/openfox.pid"
