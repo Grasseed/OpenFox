@@ -4,6 +4,107 @@ set -Eeuo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 PROJECT_ROOT="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
 
+pid_is_running() {
+  local pid="${1:-}"
+  [[ -n "$pid" ]] || return 1
+  kill -0 "$pid" 2>/dev/null
+}
+
+process_cwd() {
+  local pid="${1:-}"
+  local cwd=""
+
+  [[ -n "$pid" ]] || return 1
+
+  if command -v lsof >/dev/null 2>&1; then
+    cwd="$(lsof -a -p "$pid" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p' | head -n 1)"
+  fi
+
+  if [[ -z "$cwd" ]] && command -v pwdx >/dev/null 2>&1; then
+    cwd="$(pwdx "$pid" 2>/dev/null | awk '{print $2}')"
+  fi
+
+  [[ -n "$cwd" ]] || return 1
+  printf '%s\n' "$cwd"
+}
+
+list_project_node_script_pids() {
+  local script_name="$1"
+  local line=""
+  local pid=""
+  local cmd=""
+  local cwd=""
+
+  while IFS= read -r line; do
+    pid="$(printf '%s\n' "$line" | awk '{print $1}')"
+    [[ "$pid" =~ ^[0-9]+$ ]] || continue
+
+    cmd="$(printf '%s\n' "$line" | sed -E 's/^[[:space:]]*[0-9]+[[:space:]]+//')"
+    [[ "$cmd" == *node* ]] || continue
+    [[ "$cmd" == *"$script_name"* ]] || continue
+
+    cwd="$(process_cwd "$pid" || true)"
+    [[ "$cwd" == "$PROJECT_ROOT" ]] || continue
+    printf '%s\n' "$pid"
+  done < <(ps -axo pid=,command=)
+}
+
+unique_pid_list() {
+  local seen=" "
+  local pid=""
+  local output=""
+
+  for pid in "$@"; do
+    [[ "$pid" =~ ^[0-9]+$ ]] || continue
+    if [[ "$seen" == *" $pid "* ]]; then
+      continue
+    fi
+    seen+="$pid "
+    output+="$pid"$'\n'
+  done
+
+  printf '%s' "$output"
+}
+
+collect_project_worker_pids() {
+  local bot_pids=""
+  local webhook_pids=""
+
+  bot_pids="$(list_project_node_script_pids 'telegram-bot.mjs' || true)"
+  webhook_pids="$(list_project_node_script_pids 'telegram-webhook-handler.mjs' || true)"
+
+  unique_pid_list $bot_pids $webhook_pids
+}
+
+format_pid_csv() {
+  local pids="$1"
+  printf '%s' "$pids" | tr '\n' ',' | sed 's/,$//'
+}
+
+terminate_pid() {
+  local pid="$1"
+  local label="${2:-process}"
+
+  if ! pid_is_running "$pid"; then
+    return 0
+  fi
+
+  printf 'Stopping %s (PID %s)...\n' "$label" "$pid"
+  kill -TERM "$pid" 2>/dev/null || true
+}
+
+force_kill_pid() {
+  local pid="$1"
+  local label="${2:-process}"
+
+  if ! pid_is_running "$pid"; then
+    return 0
+  fi
+
+  printf '%s (PID %s) did not exit after SIGTERM, sending SIGKILL.\n' "$label" "$pid"
+  kill -KILL "$pid" 2>/dev/null || true
+}
+
 usage() {
   cat <<'EOF'
 OpenFox command line helper
@@ -40,13 +141,30 @@ start_openfox() {
   if [[ "$detach" -eq 1 ]]; then
     local log_file="$PROJECT_ROOT/openfox.log"
     local pid_file="$PROJECT_ROOT/openfox.pid"
+    local active_workers=""
+    local active_workers_csv=""
+
+    active_workers="$(collect_project_worker_pids || true)"
+    if [[ -n "$active_workers" ]]; then
+      active_workers_csv="$(format_pid_csv "$active_workers")"
+      printf 'OpenFox is already running (PID %s).\n' "$active_workers_csv"
+      return 0
+    fi
 
     if [[ -f "$pid_file" ]]; then
       local current_pid=""
       current_pid="$(cat "$pid_file" 2>/dev/null || true)"
-      if [[ -n "$current_pid" ]] && kill -0 "$current_pid" 2>/dev/null; then
-        printf 'OpenFox is already running (PID %s).\n' "$current_pid"
-        return 0
+      if [[ -n "$current_pid" ]] && pid_is_running "$current_pid"; then
+        local current_cwd=""
+        current_cwd="$(process_cwd "$current_pid" || true)"
+        if [[ "$current_cwd" == "$PROJECT_ROOT" ]]; then
+          printf 'OpenFox is already running (PID %s).\n' "$current_pid"
+          return 0
+        fi
+      fi
+      if [[ -n "$current_pid" ]]; then
+        printf 'OpenFox pid file is stale, removing %s.\n' "$pid_file"
+        rm -f "$pid_file"
       fi
     fi
 
@@ -56,37 +174,73 @@ start_openfox() {
     printf 'OpenFox started in background (PID %s).\n' "$openfox_pid"
     printf 'Log file: %s\n' "$log_file"
   else
+    local active_workers=""
+    local active_workers_csv=""
+
+    active_workers="$(collect_project_worker_pids || true)"
+    if [[ -n "$active_workers" ]]; then
+      active_workers_csv="$(format_pid_csv "$active_workers")"
+      printf 'OpenFox is already running (PID %s).\n' "$active_workers_csv"
+      return 0
+    fi
+
     npm --prefix "$PROJECT_ROOT" start
   fi
 }
 
 stop_openfox() {
   local pid_file="$PROJECT_ROOT/openfox.pid"
-  if [[ ! -f "$pid_file" ]]; then
-    printf 'OpenFox is not running (no pid file found).\n'
+  local pid=""
+  local worker_pids=""
+  local all_pids=""
+  local target_pid=""
+
+  if [[ -f "$pid_file" ]]; then
+    pid="$(cat "$pid_file" 2>/dev/null || true)"
+    if [[ -z "$pid" ]]; then
+      printf 'OpenFox pid file is empty, removing stale file.\n'
+      rm -f "$pid_file"
+    fi
+  fi
+
+  worker_pids="$(collect_project_worker_pids || true)"
+  all_pids="$(unique_pid_list ${pid:-} $worker_pids)"
+
+  if [[ -z "$all_pids" ]]; then
+    if [[ -f "$pid_file" ]]; then
+      rm -f "$pid_file"
+    fi
+    printf 'OpenFox is not running.\n'
     return 0
   fi
 
-  local pid
-  pid="$(cat "$pid_file" 2>/dev/null || true)"
-  if [[ -z "$pid" ]]; then
-    printf 'OpenFox pid file is empty, removing stale file.\n'
-    rm -f "$pid_file"
-    return 0
-  fi
+  for target_pid in $all_pids; do
+    [[ -n "$target_pid" ]] || continue
+    terminate_pid "$target_pid" "OpenFox process"
+  done
 
-  if kill -0 "$pid" 2>/dev/null; then
-    printf 'Stopping OpenFox (PID %s)...\n' "$pid"
-    kill -TERM "$pid"
-  else
-    printf 'OpenFox process %s is not running, removing stale pid file.\n' "$pid"
-  fi
+  sleep 1
+
+  for target_pid in $all_pids; do
+    [[ -n "$target_pid" ]] || continue
+    force_kill_pid "$target_pid" "OpenFox process"
+  done
 
   rm -f "$pid_file"
 }
 
 status_openfox() {
   local pid_file="$PROJECT_ROOT/openfox.pid"
+  local active_workers=""
+  local active_workers_csv=""
+
+  active_workers="$(collect_project_worker_pids || true)"
+  if [[ -n "$active_workers" ]]; then
+    active_workers_csv="$(format_pid_csv "$active_workers")"
+    printf 'OpenFox status: running (PID %s)\n' "$active_workers_csv"
+    return 0
+  fi
+
   if [[ ! -f "$pid_file" ]]; then
     printf 'OpenFox status: stopped\n'
     return 0
