@@ -612,6 +612,19 @@ merge_model_lists() {
   awk 'NF && !seen[$0]++'
 }
 
+ensure_local_opencode_config() {
+  local config_path="$TARGET_DIR/opencode.json"
+  local template_path="$TARGET_DIR/opencode.example.json"
+
+  if [[ -f "$config_path" ]]; then
+    return 0
+  fi
+
+  if [[ -f "$template_path" ]]; then
+    cp "$template_path" "$config_path"
+  fi
+}
+
 sync_lmstudio_provider_config() {
   local model_ids=""
   model_ids="$(fetch_lmstudio_model_ids)"
@@ -619,6 +632,7 @@ sync_lmstudio_provider_config() {
 
   local config_path="$TARGET_DIR/opencode.json"
   mkdir -p "$TARGET_DIR"
+  ensure_local_opencode_config
 
   LMSTUDIO_BASE_URL="$LMSTUDIO_BASE_URL" \
   OPENCODE_CONFIG_PATH="$config_path" \
@@ -712,6 +726,7 @@ sync_openfox_permission_config() {
   permission_mode="$(normalize_permission_mode "$OPENCODE_PERMISSION_MODE_VALUE")"
 
   mkdir -p "$TARGET_DIR"
+  ensure_local_opencode_config
 
   OPENCODE_CONFIG_PATH="$config_path" \
   OPENFOX_OPENCODE_PERMISSION_MODE="$permission_mode" \
